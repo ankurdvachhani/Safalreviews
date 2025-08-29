@@ -18,6 +18,7 @@ struct ValidationError {
     var confirmPassword: String?
     var country: String?
     var state: String?
+    var gender: String?
     var dateOfBirth: String?
     var termsAndConditions: String?
     var privacyPolicy: String?
@@ -30,6 +31,7 @@ struct ValidationError {
             confirmPassword != nil ||
             country != nil ||
             state != nil ||
+            gender != nil ||
             dateOfBirth != nil ||
             (phoneNumber != nil && !phoneNumber!.isEmpty) ||
             termsAndConditions != nil ||
@@ -49,6 +51,7 @@ final class SignUpViewModel: ObservableObject {
     @Published var confirmPassword = ""
     @Published var country = "USA"
     @Published var state = ""
+    @Published var gender = ""
     @Published var dateOfBirth = Date()
     @Published var phoneNumber = ""
     @Published var countryCode = "+1" // Default to USA
@@ -86,6 +89,8 @@ final class SignUpViewModel: ObservableObject {
         !firstName.isEmpty &&
             !lastName.isEmpty &&
             !username.isEmpty &&
+            !gender.isEmpty &&
+            !phoneNumber.isEmpty &&
             validationError.firstName == nil &&
             validationError.lastName == nil &&
             validationError.username == nil &&
@@ -94,6 +99,7 @@ final class SignUpViewModel: ObservableObject {
             validationError.confirmPassword == nil &&
             validationError.country == nil &&
             validationError.state == nil &&
+            validationError.gender == nil &&
             validationError.dateOfBirth == nil &&
             validationError.phoneNumber == nil &&
             agreeToTerms &&
@@ -132,11 +138,9 @@ final class SignUpViewModel: ObservableObject {
         validateConfirmPassword(password, confirmPassword)
         validateCountry(country)
         validateState(state)
+        validateGender(gender)
         validateDateOfBirth(dateOfBirth)
-
-        if !phoneNumber.isEmpty {
-            validatePhoneNumber(phoneNumber)
-        }
+        validatePhoneNumber(phoneNumber)
 
         // Check for validation errors
         if validationError.hasErrors || !agreeToTerms || !agreeToPrivacy {
@@ -144,7 +148,7 @@ final class SignUpViewModel: ObservableObject {
         }
 
         // Check if phone verification is required
-        if !phoneNumber.isEmpty && !isPhoneVerified && !isCurrentNumberVerified() {
+        if !isPhoneVerified && !isCurrentNumberVerified() {
             errorMessage = "Please verify your phone number before signing up"
             return
         }
@@ -167,10 +171,11 @@ final class SignUpViewModel: ObservableObject {
                 confirmPassword: confirmPassword,
                 country: country,
                 state: state.isEmpty ? nil : state,
+                gender: gender.isEmpty ? nil : gender,
                 termAndConditionsId: termsAndConditionsId,
                 privacyPolicyId: privacyPolicyId,
                 phoneNumber: phoneNumber.isEmpty ? nil : formattedPhoneNumber,
-                phoneNumberVerifyId: phoneNumber.isEmpty ? nil : verifyId,
+                phoneNumberVerifiedId: phoneNumber.isEmpty ? nil : verifyId,
                 emailVerifiedId: mailverifyId,
                 role: "User",
                 username: username,
@@ -226,6 +231,7 @@ final class SignUpViewModel: ObservableObject {
         confirmPassword = ""
         country = "USA"
         state = ""
+        gender = ""
         dateOfBirth = Date()
         phoneNumber = ""
         otp = ""
@@ -473,6 +479,14 @@ final class SignUpViewModel: ObservableObject {
         }
     }
 
+    private func validateGender(_ gender: String) {
+        if gender.isEmpty {
+            validationError.gender = "Please select your gender"
+        } else {
+            validationError.gender = nil
+        }
+    }
+
     private func validateDateOfBirth(_ date: Date) {
         let calendar = Calendar.current
         let age = calendar.dateComponents([.year], from: date, to: Date()).year ?? 0
@@ -545,14 +559,12 @@ final class SignUpViewModel: ObservableObject {
         validateConfirmPassword(password, confirmPassword)
         validateCountry(country)
         validateState(state)
+        validateGender(gender)
         validateDateOfBirth(dateOfBirth)
-
-        if !phoneNumber.isEmpty {
-            validatePhoneNumber(phoneNumber)
-        }
+        validatePhoneNumber(phoneNumber)
 
         // Check if phone verification is required
-        if !phoneNumber.isEmpty && !isPhoneVerified && !isCurrentNumberVerified() {
+        if !isPhoneVerified && !isCurrentNumberVerified() {
             errorMessage = "Please verify your phone number before signing up"
             return
         }
@@ -660,7 +672,7 @@ final class SignUpViewModel: ObservableObject {
         validationError.phoneNumber = nil
 
         if phoneNumber.isEmpty {
-            validationError.phoneNumber = "Phone number is required for verification"
+            validationError.phoneNumber = "Phone number is required"
             return false
         }
 

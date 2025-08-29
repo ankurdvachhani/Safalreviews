@@ -193,6 +193,12 @@ struct SignUpView: View {
                 error: viewModel.validationError.dateOfBirth
             )
             
+            // Gender
+            GenderPicker(
+                selectedGender: $viewModel.gender,
+                error: viewModel.validationError.gender
+            )
+            
             // Email
             CustomTextField(
                 title: "Email*",
@@ -228,9 +234,9 @@ struct SignUpView: View {
                 )
             }
             
-            // Phone Number (Optional)
+            // Phone Number
             VStack(alignment: .leading, spacing: 4) {
-                Text("Phone Number (Optional)")
+                Text("Phone Number*")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                 

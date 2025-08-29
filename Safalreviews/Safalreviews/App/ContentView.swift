@@ -62,7 +62,7 @@ struct ContentView: View {
             .presentationDragIndicator(.hidden)
         })
         .task {
-            await updateViewModel.checkForUpdates()
+          //  await updateViewModel.checkForUpdates()
         }
     }
     

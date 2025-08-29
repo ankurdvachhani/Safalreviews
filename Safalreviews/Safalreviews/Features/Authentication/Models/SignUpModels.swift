@@ -9,10 +9,11 @@ struct UserSignUpRequest: Codable {
     let confirmPassword: String
     let country: String
     let state: String?
+    let gender: String?
     let termAndConditionsId: String
     let privacyPolicyId: String
     let phoneNumber: String?
-    let phoneNumberVerifyId: String?
+    let phoneNumberVerifiedId: String?
     let emailVerifiedId: String?
     let role: String?
     let username:String?
