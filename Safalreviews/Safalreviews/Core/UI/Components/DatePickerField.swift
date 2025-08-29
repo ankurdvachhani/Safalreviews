@@ -4,6 +4,8 @@ struct DatePickerField: View {
     let title: String
     @Binding var selectedDate: Date
     let error: String?
+    @State private var showDatePicker = false
+    @State private var hasSelectedDate = false
     
     private let calendar = Calendar.current
     private let dateFormatter: DateFormatter = {
@@ -27,8 +29,8 @@ struct DatePickerField: View {
                 .foregroundColor(.gray)
             
             HStack {
-                Text(dateFormatter.string(from: selectedDate))
-                    .foregroundColor(.primary)
+                Text(hasSelectedDate ? dateFormatter.string(from: selectedDate) : "Select Date of Birth")
+                    .foregroundColor(hasSelectedDate ? .primary : .gray)
                 
                 Spacer()
                 
@@ -46,7 +48,23 @@ struct DatePickerField: View {
                     )
             )
             .onTapGesture {
-                showDatePicker()
+                showDatePicker = true
+            }
+            
+            if showDatePicker {
+                DatePicker(
+                    "Select Date of Birth",
+                    selection: $selectedDate,
+                    in: minDate...maxDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+                .onChange(of: selectedDate) { _ in
+                    hasSelectedDate = true
+                    showDatePicker = false
+                }
+                .padding(.top, 8)
             }
             
             if let error = error {
@@ -54,28 +72,6 @@ struct DatePickerField: View {
                     .foregroundColor(.red)
                     .font(.caption)
             }
-        }
-    }
-    
-    private func showDatePicker() {
-        let alert = UIAlertController(title: "Select Date of Birth", message: nil, preferredStyle: .actionSheet)
-        
-        let datePicker = UIDatePicker()
-        datePicker.datePickerMode = .date
-        datePicker.preferredDatePickerStyle = .wheels
-        datePicker.maximumDate = maxDate
-        datePicker.minimumDate = minDate
-        datePicker.date = selectedDate
-        
-        alert.addAction(UIAlertAction(title: "Done", style: .default) { _ in
-            selectedDate = datePicker.date
-        })
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.rootViewController?.present(alert, animated: true)
         }
     }
 }
