@@ -173,6 +173,8 @@ final class SignUpViewModel: ObservableObject {
                 phoneNumberVerifyId: phoneNumber.isEmpty ? nil : verifyId,
                 emailVerifiedId: mailverifyId,
                 role: "User",
+                username: username,
+                dob: dobString,
                 metadata: [
                     "username": username,
                     "dob": dobString
@@ -518,7 +520,7 @@ final class SignUpViewModel: ObservableObject {
             isLoading = false
 
             if response.success ?? false {
-                verifyId = response.verifyId ?? ""
+                verifyId = response.data?.verifyId ?? ""
                 showOTPVerification = true
                 successMessageOTP = response.message ?? "Verification code sent to your phone"
             } else {
@@ -573,7 +575,7 @@ final class SignUpViewModel: ObservableObject {
             isLoading = false
 
             if response.success ?? false {
-                mailverifyId = response.verifyId ?? ""
+                mailverifyId = response.data?.verifyId ?? ""
                 successMessageOTP = response.message ?? "Verification code sent to your email"
             } else {
                 errorMessage = response.message ?? "Failed to send verification code"

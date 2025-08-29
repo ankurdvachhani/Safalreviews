@@ -15,6 +15,8 @@ struct UserSignUpRequest: Codable {
     let phoneNumberVerifyId: String?
     let emailVerifiedId: String?
     let role: String?
+    let username:String?
+    let dob:String?
     let metadata:[String:String]?
 }
 

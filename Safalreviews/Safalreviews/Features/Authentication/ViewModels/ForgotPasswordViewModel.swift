@@ -47,7 +47,7 @@ final class ForgotPasswordViewModel: ObservableObject {
         
         Task {
             do {
-                let response = try await networkManager.sendCodeForVerification(
+                let response = try await networkManager.sendCodeForforgotVerification(
                     isForgotPassword: true,
                     type: "Email",
                     value: email,
@@ -58,7 +58,7 @@ final class ForgotPasswordViewModel: ObservableObject {
                 await MainActor.run {
                     self.isLoading = false
                     if response.success ?? false {
-                        self.verifyId = response.verifyId ?? ""
+                        self.verifyId = response.data?.verifyId ?? ""
                         self.showOTPVerification = true
                         self.successMessageOTP = response.message ?? "Verification code sent to your email"
                     } else {

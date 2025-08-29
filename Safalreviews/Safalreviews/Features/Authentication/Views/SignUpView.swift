@@ -43,6 +43,7 @@ struct SignUpView: View {
         .toast(message: $viewModel.successMessage, type: .success)
         .toast(message: $viewModel.successMessageOTP, type: .success)
         .onChange(of: viewModel.mailverifyId) { _, _ in
+            viewModel.otp = ""
             showOTPView = true
         }
         .onChange(of: viewModel.isRegistrationComplete) { _, _ in
@@ -343,7 +344,7 @@ struct SignUpView: View {
                             Text("Resend Code")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(Color.white)
+                                .foregroundColor(Color.dynamicAccent)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(

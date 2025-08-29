@@ -56,6 +56,8 @@ protocol NetworkManaging {
     func signUpOrganization(request: OrganizationSignUpRequest) async throws -> SignUpResponse
     func resetPassword(email: String, verifyId: String, otp: String, newPassword: String) async throws -> ResetPasswordResponse
     func sendCodeForVerification(isForgotPassword: Bool,type: String, value: String,phoneNumber:String?, isSendRequest:Bool) async throws ->  VerificationResponse
+    func sendCodeForforgotVerification(isForgotPassword: Bool,type: String, value: String,phoneNumber:String?, isSendRequest:Bool) async throws ->  VerificationResponse
+    
     func fetchPolicyData(type: String,application:String) async throws -> UtilitiesResponse
     func getUploadUrls(request: UploadUrlRequest) async throws -> UploadUrlResponse
     func uploadFile(url: String, data: Data, contentType: String) async throws
@@ -318,32 +320,29 @@ actor NetworkManager: NetworkManaging {
         }
         
         var path = APIConfig.Path.signUp
-        if let id = id, !id.isEmpty {
-            path += "/\(id)"
-        }
 
         // 🔁 Build the full base URL + path
-        let fullURLString = APIConfig.authModuleURLString + path
+        let fullURLString = APIConfig.baseURL + path
 
         // Build components from full URL string
         guard var components = URLComponents(string: fullURLString) else {
             throw NetworkError.invalidURL
         }
 
-        // Always include base query items
-        components.queryItems = [
-            URLQueryItem(name: "searchValue", value: orgId),
-            URLQueryItem(name: "searchKey", value: "metadata.organizationId"),
-            URLQueryItem(name: "applicationOnly", value: "true")
-        ]
-
-        // Conditionally append more if role is "Organization"
-        if request.role == "Organization" {
-            components.queryItems! += [
-                URLQueryItem(name: "uniqueCheckKey", value: "firstName")
-            ]
-        }
-        
+//        // Always include base query items
+//        components.queryItems = [
+//            URLQueryItem(name: "searchValue", value: orgId),
+//            URLQueryItem(name: "searchKey", value: "metadata.organizationId"),
+//            URLQueryItem(name: "applicationOnly", value: "true")
+//        ]
+//
+//        // Conditionally append more if role is "Organization"
+//        if request.role == "Organization" {
+//            components.queryItems! += [
+//                URLQueryItem(name: "uniqueCheckKey", value: "firstName")
+//            ]
+//        }
+//        
 
         guard let url = components.url else {
             throw NetworkError.invalidURL
@@ -496,12 +495,14 @@ actor NetworkManager: NetworkManaging {
         }
     }
     
-    func sendCodeForVerification(isForgotPassword: Bool = false,type: String, value: String,phoneNumber:String? = "", isSendRequest:Bool) async throws -> VerificationResponse {
+    
+    func sendCodeForforgotVerification(isForgotPassword: Bool = false,type: String, value: String,phoneNumber:String? = "", isSendRequest:Bool) async throws -> VerificationResponse {
         guard hasInternet else {
             throw NetworkError.noInternet
         }
         
-        guard let url = URL(string:  APIConfig.authModuleURLString + APIConfig.Path.codeVerification) else {
+      
+        guard let url = URL(string:  APIConfig.baseURL + APIConfig.Path.forgotcodeVerification) else {
             throw NetworkError.invalidURL
         }
        
@@ -510,7 +511,81 @@ actor NetworkManager: NetworkManaging {
         request.setValue(APIConfig.ContentType.json, forHTTPHeaderField: APIConfig.Header.contentType)
         if isSendRequest{
             if isForgotPassword  {
-                let resetRequest = CodeSendVerificatonRequest(type: type, value: value, userCheck: false)
+                let resetRequest = CodeSendforgotRequest(email: value)
+                request.httpBody = try? JSONEncoder().encode(resetRequest)
+            }else{
+                let resetRequest = CodeSendVerificatonRequest(type: type, value: value, userCheck: true)
+                request.httpBody = try? JSONEncoder().encode(resetRequest)
+            }
+        
+        }else{
+            let resetRequest = CodeVerificatonRequest(otp: type, verifyId: value, value: phoneNumber ?? "")
+            request.httpBody = try? JSONEncoder().encode(resetRequest)
+        }
+      
+        
+        // Log the request
+        NetworkLogger.log(request: request)
+        
+        do {
+            let (data, response) = try await session.data(for: request)
+            
+            // Log the response
+            NetworkLogger.log(response: response, data: data, error: nil)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.invalidResponse
+            }
+            
+            // Try to decode the response regardless of status code
+            let decoder = JSONDecoder()
+            let resetResponse = try decoder.decode(VerificationResponse.self, from: data)
+            
+            switch httpResponse.statusCode {
+            case 200:
+                return resetResponse
+            case 404:
+                throw NetworkError.apiError(resetResponse.message ?? "")
+            case 400...499:
+                throw NetworkError.apiError(resetResponse.message ?? "")
+            case 500...599:
+                throw NetworkError.serverError(httpResponse.statusCode)
+            default:
+                throw NetworkError.unknown(NSError(domain: "Unknown Error", code: httpResponse.statusCode))
+            }
+        } catch let error as NetworkError {
+            // Log error response
+            NetworkLogger.log(response: nil, data: nil, error: error)
+            throw error
+        } catch {
+            // Log unexpected error
+            NetworkLogger.log(response: nil, data: nil, error: error)
+            throw NetworkError.unknown(error)
+        }
+        
+    }
+    
+    func sendCodeForVerification(isForgotPassword: Bool = false,type: String, value: String,phoneNumber:String? = "", isSendRequest:Bool) async throws -> VerificationResponse {
+        guard hasInternet else {
+            throw NetworkError.noInternet
+        }
+        let urlString: String
+        if isSendRequest {
+            urlString = APIConfig.baseURL + APIConfig.Path.codeVerification
+        }else{
+            urlString = APIConfig.baseURL + APIConfig.Path.codeVerify
+        }
+        
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+       
+        var request = URLRequest(url: url)
+        request.httpMethod =  isSendRequest ? "POST" : "PUT"
+        request.setValue(APIConfig.ContentType.json, forHTTPHeaderField: APIConfig.Header.contentType)
+        if isSendRequest{
+            if isForgotPassword  {
+                let resetRequest = CodeSendforgotRequest(email: value)
                 request.httpBody = try? JSONEncoder().encode(resetRequest)
             }else{
                 let resetRequest = CodeSendVerificatonRequest(type: type, value: value, userCheck: true)

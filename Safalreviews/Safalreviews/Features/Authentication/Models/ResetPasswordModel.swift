@@ -41,6 +41,21 @@ struct CodeVerificatonRequest: Codable {
     }
 }
 
+struct CodeSendforgotRequest: Codable {
+    let email: String
+   
+
+    enum CodingKeys: String, CodingKey {
+        case email
+       
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(email, forKey: .email)
+    }
+}
+
 struct CodeSendVerificatonRequest: Codable {
     let type: String
     let value: String
@@ -78,6 +93,7 @@ struct VerificationResponse: Codable {
     let statusCode: Int?
     let verifyId: String?
     let otp: Int?
+    let data:VerificationResponseForgot?
 
     enum CodingKeys: String, CodingKey {
         case message
@@ -85,8 +101,13 @@ struct VerificationResponse: Codable {
         case statusCode
         case verifyId
         case otp
+        case data
     }
 }
+struct VerificationResponseForgot: Codable {
+    let verifyId: String?
+}
+
 struct UtilitiesResponse: Codable {
     let data: UtilitiesDataClass
 }
