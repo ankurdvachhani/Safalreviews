@@ -110,7 +110,7 @@ struct SignUpView: View {
                         }
                     } label: {
                         Text("Resend Code")
-                            .foregroundColor(Color.white)
+                            .foregroundColor(Color.dynamicAccent)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.white)

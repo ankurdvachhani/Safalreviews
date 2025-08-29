@@ -51,7 +51,7 @@ struct ForgotPasswordView: View {
     
     private var logoSection: some View {
         VStack(spacing: 8) {
-            Image("AppIcon")
+            Image("Manual")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 100, height: 100)
@@ -150,7 +150,7 @@ struct ForgotPasswordView: View {
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .foregroundColor(.accent)
+                            .foregroundColor(Color.dynamicAccent)
                             .background(Color.white)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)

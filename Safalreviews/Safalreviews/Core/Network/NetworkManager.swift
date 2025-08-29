@@ -446,7 +446,7 @@ actor NetworkManager: NetworkManaging {
             throw NetworkError.noInternet
         }
         
-        guard let url = URL(string: APIConfig.authModuleURLString + APIConfig.Path.forgotPassword) else {
+        guard let url = URL(string: APIConfig.baseURL + APIConfig.Path.forgotPassword) else {
             throw NetworkError.invalidURL
         }
         
