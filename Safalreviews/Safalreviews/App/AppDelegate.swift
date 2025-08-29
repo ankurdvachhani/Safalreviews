@@ -11,7 +11,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     ) -> Bool {
         FirebaseApp.configure()
         setupDependencies()
-        setupPushNotifications(application)
+      //  setupPushNotifications(application)
         Logger.info("Application did finish launching")
         // Check for shortcut item during launch
         if let shortcutItem = launchOptions?[.shortcutItem] as? UIApplicationShortcutItem {
@@ -23,14 +23,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         Logger.info("Application did finish launching")
         
         // Fetch app configuration
-        Task {
-            await ConfigurationService.shared.fetchConfiguration()
-        }
+//        Task {
+//            await ConfigurationService.shared.fetchConfiguration()
+//        }
         
         // Check for app updates
-        Task {
-            await UpdateAlertViewModel().checkForUpdates()
-        }
+//        Task {
+//            await UpdateAlertViewModel().checkForUpdates()
+//        }
         
         return true
     }

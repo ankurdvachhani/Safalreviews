@@ -14,7 +14,7 @@ enum APIConfig {
         static let appVersionCheck = "/api/application/version-check"
         static let utilities = "/api/legal-document/public"
         static let signUp = "register"
-        static let signIn =  "/api/login"
+        static let signIn =  "/api/user/login"
         static let forgotPassword = "reset"
         static let codeVerification = "code-verify"
         static let drainageEntries = "/api/drainage"

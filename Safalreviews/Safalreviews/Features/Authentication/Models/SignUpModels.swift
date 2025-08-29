@@ -8,6 +8,7 @@ struct UserSignUpRequest: Codable {
     let password: String
     let confirmPassword: String
     let country: String
+    let state: String?
     let termAndConditionsId: String
     let privacyPolicyId: String
     let phoneNumber: String?

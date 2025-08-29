@@ -150,40 +150,40 @@ struct ContentView: View {
             // Tab View
             TabView(selection: $appState.selectedTab) {
               
-                
-                DashboardView()
-                    .tag(AppState.Tab.dashboard)
-                    .tabItem {
-                        Image(systemName: "house")
-                        Text("Dashboard")
-                    }
-
-                
-                if TokenManager.shared.loadCurrentUser()?.role != "Patient" {
-                    PatientListView()
-                      .tag(AppState.Tab.PatientList)
-                      .tabItem {
-                          Image(systemName: "person")
-                          Text("Patients")
-                      }
-                }
-                
-                IRDrainageView()
-                    .tag(AppState.Tab.Drainage)
-                    .tabItem {
-                        Image(systemName: "syringe")
-                        Text("My Drainage")
-                    }
-                    .id(appState.selectedTab)
-
-             
-                IncidentListView()
-                    .tag(AppState.Tab.IncidentList)
-                    .tabItem {
-                        Image(systemName: "note.text.badge.plus")
-                        Text("Incident")
-                    }
-                    .id(appState.selectedTab)
+//                
+//                DashboardView()
+//                    .tag(AppState.Tab.dashboard)
+//                    .tabItem {
+//                        Image(systemName: "house")
+//                        Text("Dashboard")
+//                    }
+//
+//                
+//                if TokenManager.shared.loadCurrentUser()?.role != "Patient" {
+//                    PatientListView()
+//                      .tag(AppState.Tab.PatientList)
+//                      .tabItem {
+//                          Image(systemName: "person")
+//                          Text("Patients")
+//                      }
+//                }
+//                
+//                IRDrainageView()
+//                    .tag(AppState.Tab.Drainage)
+//                    .tabItem {
+//                        Image(systemName: "syringe")
+//                        Text("My Drainage")
+//                    }
+//                    .id(appState.selectedTab)
+//
+//             
+//                IncidentListView()
+//                    .tag(AppState.Tab.IncidentList)
+//                    .tabItem {
+//                        Image(systemName: "note.text.badge.plus")
+//                        Text("Incident")
+//                    }
+//                    .id(appState.selectedTab)
                 
                 SettingsView()
                     .tag(AppState.Tab.settings)

@@ -100,7 +100,7 @@ struct SignUpView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.accentColor)
+                            .background(Color.dynamicAccent)
                             .cornerRadius(10)
                     }
                     
@@ -110,13 +110,13 @@ struct SignUpView: View {
                         }
                     } label: {
                         Text("Resend Code")
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(Color.white)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.white)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.accentColor, lineWidth: 1)
+                                    .stroke(Color.dynamicAccent, lineWidth: 1)
                             )
                     }
                 }
@@ -288,7 +288,7 @@ struct SignUpView: View {
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
-                                    .background(Color.accent)
+                                    .background(Color.dynamicAccent)
                                     .cornerRadius(8)
                             }
                             .disabled(viewModel.isLoading)
@@ -330,7 +330,7 @@ struct SignUpView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(Color.accent)
+                                .background(Color.dynamicAccent)
                                 .cornerRadius(8)
                         }
                         .disabled(viewModel.isLoading)
@@ -343,12 +343,12 @@ struct SignUpView: View {
                             Text("Resend Code")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(.accent)
+                                .foregroundColor(Color.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.accent, lineWidth: 1)
+                                        .stroke(Color.dynamicAccent, lineWidth: 1)
                                 )
                         }
                         .disabled(viewModel.isLoading)
@@ -391,14 +391,14 @@ struct SignUpView: View {
             } label: {
                 HStack {
                     Image(systemName: viewModel.agreeToTerms ? "checkmark.square.fill" : "square")
-                        .foregroundColor(viewModel.agreeToTerms ? .accent : .gray)
+                        .foregroundColor(viewModel.agreeToTerms ? Color.dynamicAccent : .gray)
                         .font(.system(size: 20))
 
                     Text("I agree to the")
                         .foregroundColor(.primary)
 
                     Text("Terms & Conditions")
-                        .foregroundColor(.accent)
+                        .foregroundColor(Color.dynamicAccent)
                 }
             }
             .sheet(isPresented: $showTermsAndConditions) {
@@ -426,14 +426,14 @@ struct SignUpView: View {
             } label: {
                 HStack {
                     Image(systemName: viewModel.agreeToPrivacy ? "checkmark.square.fill" : "square")
-                        .foregroundColor(viewModel.agreeToPrivacy ? .accent : .gray)
+                        .foregroundColor(viewModel.agreeToPrivacy ? Color.dynamicAccent : .gray)
                         .font(.system(size: 20))
 
                     Text("I agree to the")
                         .foregroundColor(.primary)
 
                     Text("Privacy Policy")
-                        .foregroundColor(.accent)
+                        .foregroundColor(Color.dynamicAccent)
                 }
             }
             .sheet(isPresented: $showPrivacyPolicy) {
@@ -472,7 +472,7 @@ struct SignUpView: View {
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(Color.accent.opacity(viewModel.canSignUp ? 1 : 0.5))
+                    .background(Color.dynamicAccent.opacity(viewModel.canSignUp ? 1 : 0.5))
                     .cornerRadius(12)
             } else {
                 Text("SIGN UP")
@@ -480,7 +480,7 @@ struct SignUpView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(Color.accent.opacity(viewModel.canSignUp ? 1 : 0.5))
+                    .background(Color.dynamicAccent.opacity(viewModel.canSignUp ? 1 : 0.5))
                     .cornerRadius(12)
             }
         }
@@ -497,7 +497,7 @@ struct SignUpView: View {
                 // Dismiss all presented views
                 NavigationManager.shared.dismiss()
             }
-            .foregroundColor(.accent)
+            .foregroundColor(Color.dynamicAccent)
         }
     }
 }

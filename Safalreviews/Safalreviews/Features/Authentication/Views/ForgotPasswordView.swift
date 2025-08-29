@@ -120,7 +120,7 @@ struct ForgotPasswordView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .foregroundColor(.white)
-                        .background(Color.accent)
+                        .background(Color.dynamicAccent)
                         .cornerRadius(12)
                 }
                 .disabled(viewModel.isLoading)
@@ -136,7 +136,7 @@ struct ForgotPasswordView: View {
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .foregroundColor(.white)
-                            .background(Color.accent)
+                            .background(Color.dynamicAccent)
                             .cornerRadius(12)
                     }
                     .disabled(viewModel.isLoading)
@@ -154,7 +154,7 @@ struct ForgotPasswordView: View {
                             .background(Color.white)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.accent, lineWidth: 1)
+                                    .stroke(Color.dynamicAccent, lineWidth: 1)
                             )
                     }
                     .disabled(viewModel.isLoading)
@@ -169,7 +169,7 @@ struct ForgotPasswordView: View {
                 Image(systemName: "chevron.left")
                 Text("Back to Login")
             }
-            .foregroundColor(.accent)
+            .foregroundColor(Color.dynamicAccent)
         }
         .padding(.vertical, 20)
     }

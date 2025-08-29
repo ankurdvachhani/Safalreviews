@@ -166,6 +166,7 @@ final class SignUpViewModel: ObservableObject {
                 password: password,
                 confirmPassword: confirmPassword,
                 country: country,
+                state: state.isEmpty ? nil : state,
                 termAndConditionsId: termsAndConditionsId,
                 privacyPolicyId: privacyPolicyId,
                 phoneNumber: phoneNumber.isEmpty ? nil : formattedPhoneNumber,
@@ -174,8 +175,7 @@ final class SignUpViewModel: ObservableObject {
                 role: "User",
                 metadata: [
                     "username": username,
-                    "dob": dobString,
-                    "state": state
+                    "dob": dobString
                 ]
             )
             
