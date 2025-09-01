@@ -150,13 +150,13 @@ struct ContentView: View {
             // Tab View
             TabView(selection: $appState.selectedTab) {
               
-//                
-//                DashboardView()
-//                    .tag(AppState.Tab.dashboard)
-//                    .tabItem {
-//                        Image(systemName: "house")
-//                        Text("Dashboard")
-//                    }
+                
+                HomeView()
+                    .tag(AppState.Tab.home)
+                    .tabItem {
+                        Image(systemName: "house")
+                        Text("Home")
+                    }
 //
 //                
 //                if TokenManager.shared.loadCurrentUser()?.role != "Patient" {
@@ -217,7 +217,7 @@ struct AppHeader: View {
                 Text("Safal")
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundColor(Color.dynamicAccent) +
-                    Text(" IRDrainMate")
+                    Text(" Reviews")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(Color.dynamicAccent)
 

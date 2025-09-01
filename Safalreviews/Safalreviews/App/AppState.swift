@@ -64,7 +64,7 @@ extension AppState {
     enum Tab: String, Hashable {
         case Drainage
         case PatientList
-        case dashboard
+        case home
         case settings
         case IncidentList
         
@@ -72,7 +72,7 @@ extension AppState {
             switch self {
             case .PatientList: return "Patients"
             case .Drainage: return "Drainage"
-            case .dashboard: return "Dashboard"
+            case .home: return "Home"
             case .IncidentList: return "IncidentList"
             case .settings: return "Settings"
             }
@@ -82,7 +82,7 @@ extension AppState {
             switch self {
             case .Drainage: return "syringe"
             case .PatientList: return "person"
-            case .dashboard: return "house"
+            case .home: return "house"
             case .IncidentList:return "note.text.badge.plus"
             case .settings: return "gear"
             }
