@@ -146,8 +146,18 @@ class ReviewStore: ObservableObject {
     }
     
     func updateFilter(_ filter: ReviewFilter) async {
+        // Check if categoryType changed
+        let categoryTypeChanged = currentFilter.categoryType != filter.categoryType
+        
         currentFilter = filter
         await fetchProductReviews(filter: currentFilter, resetPages: true, sortOption: currentSortOption)
+        
+        // If categoryType changed, refresh filter data
+        if categoryTypeChanged {
+            await fetchCategories(categoryType: filter.categoryType)
+            await fetchSubcategories(categoryType: filter.categoryType)
+            await fetchBrands(categoryType: filter.categoryType)
+        }
     }
     
     func updateSortOption(_ sortOption: ReviewSortOption, filter: ReviewFilter? = nil) async {
@@ -167,16 +177,21 @@ class ReviewStore: ObservableObject {
     }
     
     // MARK: - Filter Data Fetching
-    func fetchCategories() async {
+    func fetchCategories(categoryType: String? = nil) async {
         do {
+            var queryItems = [
+                URLQueryItem(name: "page", value: "1"),
+                URLQueryItem(name: "limit", value: "100")
+            ]
+            
+            if let categoryType = categoryType, categoryType != "All types" {
+                queryItems.append(URLQueryItem(name: "categoryType", value: categoryType))
+            }
+            
             let endpoint = Endpoint(
                 path: "/api/admin/categories",
                 method: .get,
-                queryItems: [
-                    URLQueryItem(name: "page", value: "1"),
-                    URLQueryItem(name: "limit", value: "100"),
-                    URLQueryItem(name: "categoryType", value: "null")
-                ]
+                queryItems: queryItems
             )
             
             let response: CategoryResponse = try await networkManager.fetch(endpoint)
@@ -188,16 +203,21 @@ class ReviewStore: ObservableObject {
         }
     }
     
-    func fetchSubcategories() async {
+    func fetchSubcategories(categoryType: String? = nil) async {
         do {
+            var queryItems = [
+                URLQueryItem(name: "page", value: "1"),
+                URLQueryItem(name: "limit", value: "100")
+            ]
+            
+            if let categoryType = categoryType, categoryType != "All types" {
+                queryItems.append(URLQueryItem(name: "categoryType", value: categoryType))
+            }
+            
             let endpoint = Endpoint(
                 path: "/api/admin/subcategories",
                 method: .get,
-                queryItems: [
-                    URLQueryItem(name: "page", value: "1"),
-                    URLQueryItem(name: "limit", value: "100"),
-                    URLQueryItem(name: "categoryType", value: "null")
-                ]
+                queryItems: queryItems
             )
             
             let response: SubcategoryResponse = try await networkManager.fetch(endpoint)
@@ -209,16 +229,21 @@ class ReviewStore: ObservableObject {
         }
     }
     
-    func fetchBrands() async {
+    func fetchBrands(categoryType: String? = nil) async {
         do {
+            var queryItems = [
+                URLQueryItem(name: "page", value: "1"),
+                URLQueryItem(name: "limit", value: "100")
+            ]
+            
+            if let categoryType = categoryType, categoryType != "All types" {
+                queryItems.append(URLQueryItem(name: "categoryType", value: categoryType))
+            }
+            
             let endpoint = Endpoint(
                 path: "/api/admin/brands",
                 method: .get,
-                queryItems: [
-                    URLQueryItem(name: "page", value: "1"),
-                    URLQueryItem(name: "limit", value: "100"),
-                    URLQueryItem(name: "categoryType", value: "null")
-                ]
+                queryItems: queryItems
             )
             
             let response: BrandResponse = try await networkManager.fetch(endpoint)

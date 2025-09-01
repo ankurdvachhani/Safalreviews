@@ -136,6 +136,17 @@ struct Category: Identifiable, Codable {
         case id = "_id"
         case name, isActive, categoryType, slug, createdAt, updatedAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        isActive = try container.decode(Bool.self, forKey: .isActive)
+        categoryType = try container.decodeIfPresent(String.self, forKey: .categoryType) ?? "general"
+        slug = try container.decode(String.self, forKey: .slug)
+        createdAt = try container.decode(String.self, forKey: .createdAt)
+        updatedAt = try container.decode(String.self, forKey: .updatedAt)
+    }
 }
 
 // MARK: - Subcategory Response Models
@@ -163,6 +174,18 @@ struct Subcategory: Identifiable, Codable {
         case id = "_id"
         case name, category, isActive, categoryType, slug, createdAt, updatedAt
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        category = try container.decode(CategoryInfo.self, forKey: .category)
+        isActive = try container.decode(Bool.self, forKey: .isActive)
+        categoryType = try container.decodeIfPresent(String.self, forKey: .categoryType) ?? "general"
+        slug = try container.decode(String.self, forKey: .slug)
+        createdAt = try container.decode(String.self, forKey: .createdAt)
+        updatedAt = try container.decode(String.self, forKey: .updatedAt)
+    }
 }
 
 // MARK: - Brand Response Models
@@ -181,7 +204,7 @@ struct Brand: Identifiable, Codable {
     let name: String
     let subCategory: SubCategoryInfo
     let isActive: Bool
-    let categoryType: String
+    let categoryType: String?
     let slug: String
     let createdAt: String
     let updatedAt: String
@@ -196,20 +219,24 @@ struct Brand: Identifiable, Codable {
 
 struct ReviewFilter {
     var categoryType: String?
-    var category: String?
-    var subCategory: String?
-    var brand: String?
+    var categories: [String]?
+    var subCategories: [String]?
+    var brands: [String]?
     var search: String = ""
     
     var hasActiveFilters: Bool {
-        return categoryType != nil || category != nil || subCategory != nil || brand != nil || !search.isEmpty
+        return categoryType != nil || 
+               (categories != nil && !categories!.isEmpty) || 
+               (subCategories != nil && !subCategories!.isEmpty) || 
+               (brands != nil && !brands!.isEmpty) || 
+               !search.isEmpty
     }
     
     mutating func clearAll() {
         categoryType = nil
-        category = nil
-        subCategory = nil
-        brand = nil
+        categories = nil
+        subCategories = nil
+        brands = nil
         search = ""
     }
     
@@ -220,16 +247,22 @@ struct ReviewFilter {
             items.append(URLQueryItem(name: "categoryType", value: categoryType))
         }
         
-        if let category = category {
-            items.append(URLQueryItem(name: "category", value: category))
+        if let categories = categories, !categories.isEmpty {
+            for category in categories {
+                items.append(URLQueryItem(name: "category", value: category))
+            }
         }
         
-        if let subCategory = subCategory {
-            items.append(URLQueryItem(name: "subCategory", value: subCategory))
+        if let subCategories = subCategories, !subCategories.isEmpty {
+            for subCategory in subCategories {
+                items.append(URLQueryItem(name: "subCategory", value: subCategory))
+            }
         }
         
-        if let brand = brand {
-            items.append(URLQueryItem(name: "brand", value: brand))
+        if let brands = brands, !brands.isEmpty {
+            for brand in brands {
+                items.append(URLQueryItem(name: "brand", value: brand))
+            }
         }
         
         if !search.isEmpty {

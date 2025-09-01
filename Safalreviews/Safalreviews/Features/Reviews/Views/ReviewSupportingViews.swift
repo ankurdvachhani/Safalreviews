@@ -84,18 +84,18 @@ struct ReviewNoFilterResultsView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    if let category = currentFilter.category {
-                        Text("• Category: \(category)")
+                    if let categories = currentFilter.categories, !categories.isEmpty {
+                        Text("• Categories: \(categories.count) selected")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    if let subCategory = currentFilter.subCategory {
-                        Text("• Subcategory: \(subCategory)")
+                    if let subCategories = currentFilter.subCategories, !subCategories.isEmpty {
+                        Text("• Subcategories: \(subCategories.count) selected")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    if let brand = currentFilter.brand {
-                        Text("• Brand: \(brand)")
+                    if let brands = currentFilter.brands, !brands.isEmpty {
+                        Text("• Brands: \(brands.count) selected")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

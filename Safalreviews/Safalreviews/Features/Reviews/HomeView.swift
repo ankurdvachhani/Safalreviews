@@ -117,17 +117,17 @@ struct HomeView: View {
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 
-                // Sort Button
-                Button {
-                    showingSortSheet = true
-                } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: "arrow.up.arrow.down.circle")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(Color.dynamicAccent)
-                    }
-                }
-                
+//                // Sort Button
+//                Button {
+//                    showingSortSheet = true
+//                } label: {
+//                    VStack(spacing: 2) {
+//                        Image(systemName: "arrow.up.arrow.down.circle")
+//                            .font(.system(size: 20, weight: .medium))
+//                            .foregroundColor(Color.dynamicAccent)
+//                    }
+//                }
+//                
                 // Filter Button
                 Button {
                     showingFilterSheet = true
@@ -297,20 +297,20 @@ struct ProductReviewCard: View {
                         )
                 }
                 
-                // Product badge
-                HStack(spacing: 4) {
-                    Image(systemName: "cube.box")
-                        .font(.caption2)
-                    Text("Product")
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.green)
-                .clipShape(Capsule())
-                .padding(8)
+//                // Product badge
+//                HStack(spacing: 4) {
+//                    Image(systemName: "cube.box")
+//                        .font(.caption2)
+//                    Text("Product")
+//                        .font(.caption2)
+//                        .fontWeight(.medium)
+//                }
+//                .foregroundColor(.white)
+//                .padding(.horizontal, 8)
+//                .padding(.vertical, 4)
+//                .background(Color.green)
+//                .clipShape(Capsule())
+//                .padding(8)
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))
             

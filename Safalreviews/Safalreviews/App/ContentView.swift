@@ -213,13 +213,20 @@ struct AppHeader: View {
                     .first?.safeAreaInsets.top ?? 0)
 
             HStack(spacing: 16) {
+                
+                Image("longlogo") // or use your custom image
+                       .resizable()
+                       .scaledToFit()
+                       .frame(width: 150, height: 40)
+                       .foregroundColor(Color.dynamicAccent)
+                
                 // App Title
-                Text("Safal")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(Color.dynamicAccent) +
-                    Text(" Reviews")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(Color.dynamicAccent)
+//                Text("Safal")
+//                    .font(.system(size: 28, weight: .semibold))
+//                    .foregroundColor(Color.dynamicAccent) +
+//                    Text(" Reviews")
+//                    .font(.system(size: 28, weight: .bold))
+//                    .foregroundColor(Color.dynamicAccent)
 
                 Spacer()
                

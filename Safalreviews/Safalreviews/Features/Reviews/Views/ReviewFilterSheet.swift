@@ -67,12 +67,11 @@ struct ReviewFilterSheet: View {
                         showCategoryDropdown.toggle()
                     }) {
                         HStack {
-                            if let categoryId = tempFilter.category {
-                                let categoryName = reviewStore.getCategoryName(for: categoryId)
-                                Text(categoryName)
+                            if let categories = tempFilter.categories, !categories.isEmpty {
+                                Text("\(categories.count) selected")
                                     .foregroundColor(.primary)
                             } else {
-                                Text("Select Category")
+                                Text("Select Categories")
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
@@ -85,15 +84,18 @@ struct ReviewFilterSheet: View {
                         ForEach(reviewStore.categories) { category in
                             HStack {
                                 Button(action: {
-                                    if tempFilter.category == category.id {
-                                        tempFilter.category = nil
+                                    if tempFilter.categories?.contains(category.id) == true {
+                                        tempFilter.categories?.removeAll { $0 == category.id }
                                     } else {
-                                        tempFilter.category = category.id
+                                        if tempFilter.categories == nil {
+                                            tempFilter.categories = []
+                                        }
+                                        tempFilter.categories?.append(category.id)
                                     }
                                 }) {
                                     HStack {
-                                        Image(systemName: tempFilter.category == category.id ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(tempFilter.category == category.id ? .accentColor : .gray)
+                                        Image(systemName: tempFilter.categories?.contains(category.id) == true ? "checkmark.square.fill" : "square")
+                                            .foregroundColor(tempFilter.categories?.contains(category.id) == true ? .accentColor : .gray)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(category.name)
                                                 .foregroundColor(.primary)
@@ -117,12 +119,11 @@ struct ReviewFilterSheet: View {
                         showSubcategoryDropdown.toggle()
                     }) {
                         HStack {
-                            if let subcategoryId = tempFilter.subCategory {
-                                let subcategoryName = reviewStore.getSubcategoryName(for: subcategoryId)
-                                Text(subcategoryName)
+                            if let subcategories = tempFilter.subCategories, !subcategories.isEmpty {
+                                Text("\(subcategories.count) selected")
                                     .foregroundColor(.primary)
                             } else {
-                                Text("Select Subcategory")
+                                Text("Select Subcategories")
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
@@ -135,15 +136,18 @@ struct ReviewFilterSheet: View {
                         ForEach(reviewStore.subcategories) { subcategory in
                             HStack {
                                 Button(action: {
-                                    if tempFilter.subCategory == subcategory.id {
-                                        tempFilter.subCategory = nil
+                                    if tempFilter.subCategories?.contains(subcategory.id) == true {
+                                        tempFilter.subCategories?.removeAll { $0 == subcategory.id }
                                     } else {
-                                        tempFilter.subCategory = subcategory.id
+                                        if tempFilter.subCategories == nil {
+                                            tempFilter.subCategories = []
+                                        }
+                                        tempFilter.subCategories?.append(subcategory.id)
                                     }
                                 }) {
                                     HStack {
-                                        Image(systemName: tempFilter.subCategory == subcategory.id ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(tempFilter.subCategory == subcategory.id ? .accentColor : .gray)
+                                        Image(systemName: tempFilter.subCategories?.contains(subcategory.id) == true ? "checkmark.square.fill" : "square")
+                                            .foregroundColor(tempFilter.subCategories?.contains(subcategory.id) == true ? .accentColor : .gray)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(subcategory.name)
                                                 .foregroundColor(.primary)
@@ -167,12 +171,11 @@ struct ReviewFilterSheet: View {
                         showBrandDropdown.toggle()
                     }) {
                         HStack {
-                            if let brandId = tempFilter.brand {
-                                let brandName = reviewStore.getBrandName(for: brandId)
-                                Text(brandName)
+                            if let brands = tempFilter.brands, !brands.isEmpty {
+                                Text("\(brands.count) selected")
                                     .foregroundColor(.primary)
                             } else {
-                                Text("Select Brand")
+                                Text("Select Brands")
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
@@ -185,15 +188,18 @@ struct ReviewFilterSheet: View {
                         ForEach(reviewStore.brands) { brand in
                             HStack {
                                 Button(action: {
-                                    if tempFilter.brand == brand.id {
-                                        tempFilter.brand = nil
+                                    if tempFilter.brands?.contains(brand.id) == true {
+                                        tempFilter.brands?.removeAll { $0 == brand.id }
                                     } else {
-                                        tempFilter.brand = brand.id
+                                        if tempFilter.brands == nil {
+                                            tempFilter.brands = []
+                                        }
+                                        tempFilter.brands?.append(brand.id)
                                     }
                                 }) {
                                     HStack {
-                                        Image(systemName: tempFilter.brand == brand.id ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(tempFilter.brand == brand.id ? .accentColor : .gray)
+                                        Image(systemName: tempFilter.brands?.contains(brand.id) == true ? "checkmark.square.fill" : "square")
+                                            .foregroundColor(tempFilter.brands?.contains(brand.id) == true ? .accentColor : .gray)
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(brand.name)
                                                 .foregroundColor(.primary)
