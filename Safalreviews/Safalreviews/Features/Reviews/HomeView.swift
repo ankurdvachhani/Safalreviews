@@ -150,7 +150,7 @@ struct HomeView: View {
             
             // Results count
             HStack {
-                Text("\(reviewStore.productReviews.count) results found")
+                Text("\(reviewStore.totalProducts) results found")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 

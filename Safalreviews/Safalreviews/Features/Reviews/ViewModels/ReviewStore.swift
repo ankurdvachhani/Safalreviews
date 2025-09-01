@@ -19,7 +19,7 @@ class ReviewStore: ObservableObject {
     private var refreshTask: Task<Void, Never>?
     private var fetchTask: Task<Void, Never>?
     private var isFetching = false
-    private var totalProducts = 0
+    @Published var totalProducts = 0
     private var currentSortOption: ReviewSortOption = .dateDesc
     private var currentFilter = ReviewFilter()
     

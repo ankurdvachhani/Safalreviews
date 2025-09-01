@@ -17,8 +17,8 @@ struct ProductReview: Identifiable, Codable {
     let name: String
     let description: String
     let media: [String]
-    let category: String
-    let subCategory: String
+    let category: String?
+    let subCategory: String?
     let specifications: [String: String]
     let isActive: Bool
     let slug: String
