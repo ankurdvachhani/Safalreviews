@@ -444,7 +444,9 @@ struct PostCardView: View {
                     .foregroundColor(.secondary)
                 
                 Button(action: {
-                    viewModel.likePost(post)
+                    Task {
+                        await viewModel.likePost(post)
+                    }
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup")
@@ -465,7 +467,9 @@ struct PostCardView: View {
                     .foregroundColor(.secondary)
                 
                 Button(action: {
-                    viewModel.dislikePost(post)
+                    Task {
+                        await viewModel.dislikePost(post)
+                    }
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")

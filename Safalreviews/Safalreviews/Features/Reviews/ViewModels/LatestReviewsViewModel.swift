@@ -164,14 +164,84 @@ class LatestReviewsViewModel: ObservableObject {
         successMessage = nil
     }
     
-    func likePost(_ post: Post) {
-        // TODO: Implement like functionality
+    // MARK: - Like/Dislike Methods
+    func likePost(_ post: Post) async {
         print("👍 Liking post: \(post.id)")
+        
+        do {
+            let endpoint = Endpoint(
+                path: "/api/post/\(post.id)/like",
+                method: .post
+            )
+            
+            let response: PostLikeResponse = try await networkManager.fetch(endpoint)
+            
+            if response.success {
+                // Update the post in the local array with new like data
+                await updatePostWithLikeData(response.data)
+                print("✅ Post liked successfully")
+            } else {
+                errorMessage = "Failed to like post"
+                print("❌ Failed to like post: \(response.message)")
+            }
+            
+        } catch {
+            print("❌ Error liking post: \(error)")
+            errorMessage = "Failed to like post: \(error.localizedDescription)"
+        }
     }
     
-    func dislikePost(_ post: Post) {
-        // TODO: Implement dislike functionality
+    func dislikePost(_ post: Post) async {
         print("👎 Disliking post: \(post.id)")
+        
+        do {
+            let endpoint = Endpoint(
+                path: "/api/post/\(post.id)/dislike",
+                method: .post
+            )
+            
+            let response: PostDislikeResponse = try await networkManager.fetch(endpoint)
+            
+            if response.success {
+                // Update the post in the local array with new dislike data
+                await updatePostWithDislikeData(response.data)
+                print("✅ Post disliked successfully")
+            } else {
+                errorMessage = "Failed to dislike post"
+                print("❌ Failed to dislike post: \(response.message)")
+            }
+            
+        } catch {
+            print("❌ Error disliking post: \(error)")
+            errorMessage = "Failed to dislike post: \(error.localizedDescription)"
+        }
+    }
+    
+    // MARK: - Private Helper Methods
+    @MainActor
+    private func updatePostWithLikeData(_ likeData: PostLikeData) {
+        if let index = posts.firstIndex(where: { $0.id == likeData.id }) {
+            // Update the post with new like data
+            posts[index].likes = likeData.likes
+            posts[index].dislikes = likeData.dislikes
+            posts[index].likesCount = likeData.likesCount
+            posts[index].dislikesCount = likeData.dislikesCount
+            
+            print("📊 Updated like count: \(likeData.likesCount), dislike count: \(likeData.dislikesCount)")
+        }
+    }
+    
+    @MainActor
+    private func updatePostWithDislikeData(_ dislikeData: PostDislikeData) {
+        if let index = posts.firstIndex(where: { $0.id == dislikeData.id }) {
+            // Update the post with new dislike data
+            posts[index].likes = dislikeData.likes
+            posts[index].dislikes = dislikeData.dislikes
+            posts[index].likesCount = dislikeData.likesCount
+            posts[index].dislikesCount = dislikeData.dislikesCount
+            
+            print("📊 Updated like count: \(dislikeData.likesCount), dislike count: \(dislikeData.dislikesCount)")
+        }
     }
     
     func sharePost(_ post: Post) {

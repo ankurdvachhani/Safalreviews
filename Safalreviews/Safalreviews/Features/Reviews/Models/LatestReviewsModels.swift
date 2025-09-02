@@ -18,8 +18,8 @@ struct Post: Identifiable, Codable {
     let description: String
     let imgs: [String]
     let videos: [String]
-    let likes: [String]
-    let dislikes: [String]
+    var likes: [String]
+    var dislikes: [String]
     let recommended: String
     let shares: [String]
     let reviews: [Review]
@@ -38,11 +38,11 @@ struct Post: Identifiable, Codable {
     let slug: String
     let createdAt: String
     let updatedAt: String
-    let likesCount: Int
-    let dislikesCount: Int
+    var likesCount: Int
+    var dislikesCount: Int
     let sharesCount: Int
-    let likesDetails: [PostUser]
-    let dislikesDetails: [PostUser]
+    var likesDetails: [PostUser]
+    var dislikesDetails: [PostUser]
     let sharesDetails: [PostUser]
     
     init(from decoder: Decoder) throws {
@@ -161,12 +161,22 @@ struct Post: Identifiable, Codable {
     
     var isLiked: Bool {
         // This would need to be updated based on current user ID
-        return false
+        // For now, we'll check if the current user ID is in the likes array
+        // You would need to get the current user ID from your authentication system
+        let currentUserId = getCurrentUserId() // This should be implemented based on your auth system
+        return likes.contains(currentUserId)
     }
     
     var isDisliked: Bool {
         // This would need to be updated based on current user ID
-        return false
+        // For now, we'll check if the current user ID is in the dislikes array
+        let currentUserId = getCurrentUserId() // This should be implemented based on your auth system
+        return dislikes.contains(currentUserId)
+    }
+    
+    // Helper method to get current user ID
+    private func getCurrentUserId() -> String {
+        return TokenManager.shared.getUserId() ?? ""
     }
 }
 
@@ -196,21 +206,21 @@ struct PostUser: Identifiable, Codable {
     let firstName: String
     let lastName: String
     let email: String
-    let emailVerifiedId: String
-    let phoneNumber: String
-    let phoneNumberVerifiedId: String
-    let dob: String
-    let country: String
-    let state: String
-    let userSlug: String
-    let metadata: PostUserMetadata
-    let status: String
-    let applicationOnly: Bool
-    let comment: [PostUserComment]
-    let createdAt: String
-    let updatedAt: String
-    let isDelete: Bool
-    let isDeleted: Bool
+    let emailVerifiedId: String?
+    let phoneNumber: String?
+    let phoneNumberVerifiedId: String?
+    let dob: String?
+    let country: String?
+    let state: String?
+    let userSlug: String?
+    let metadata: PostUserMetadata?
+    let status: String?
+    let applicationOnly: Bool?
+    let comment: [PostUserComment]?
+    let createdAt: String?
+    let updatedAt: String?
+    let isDelete: Bool?
+    let isDeleted: Bool?
     let profilePicture: String?
     
     init(from decoder: Decoder) throws {
@@ -221,21 +231,21 @@ struct PostUser: Identifiable, Codable {
         firstName = try container.decode(String.self, forKey: .firstName)
         lastName = try container.decode(String.self, forKey: .lastName)
         email = try container.decode(String.self, forKey: .email)
-        emailVerifiedId = try container.decode(String.self, forKey: .emailVerifiedId)
-        phoneNumber = try container.decode(String.self, forKey: .phoneNumber)
-        phoneNumberVerifiedId = try container.decode(String.self, forKey: .phoneNumberVerifiedId)
-        dob = try container.decode(String.self, forKey: .dob)
-        country = try container.decode(String.self, forKey: .country)
-        state = try container.decode(String.self, forKey: .state)
-        userSlug = try container.decode(String.self, forKey: .userSlug)
-        metadata = try container.decode(PostUserMetadata.self, forKey: .metadata)
-        status = try container.decode(String.self, forKey: .status)
-        applicationOnly = try container.decodeIfPresent(Bool.self, forKey: .applicationOnly) ?? false
-        comment = try container.decode([PostUserComment].self, forKey: .comment)
-        createdAt = try container.decode(String.self, forKey: .createdAt)
-        updatedAt = try container.decode(String.self, forKey: .updatedAt)
-        isDelete = try container.decode(Bool.self, forKey: .isDelete)
-        isDeleted = try container.decode(Bool.self, forKey: .isDeleted)
+        emailVerifiedId = try container.decodeIfPresent(String.self, forKey: .emailVerifiedId)
+        phoneNumber = try container.decodeIfPresent(String.self, forKey: .phoneNumber)
+        phoneNumberVerifiedId = try container.decodeIfPresent(String.self, forKey: .phoneNumberVerifiedId)
+        dob = try container.decodeIfPresent(String.self, forKey: .dob)
+        country = try container.decodeIfPresent(String.self, forKey: .country)
+        state = try container.decodeIfPresent(String.self, forKey: .state)
+        userSlug = try container.decodeIfPresent(String.self, forKey: .userSlug)
+        metadata = try container.decodeIfPresent(PostUserMetadata.self, forKey: .metadata)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        applicationOnly = try container.decodeIfPresent(Bool.self, forKey: .applicationOnly)
+        comment = try container.decodeIfPresent([PostUserComment].self, forKey: .comment) ?? []
+        createdAt = try container.decodeIfPresent(String.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(String.self, forKey: .updatedAt)
+        isDelete = try container.decodeIfPresent(Bool.self, forKey: .isDelete)
+        isDeleted = try container.decodeIfPresent(Bool.self, forKey: .isDeleted)
         profilePicture = try container.decodeIfPresent(String.self, forKey: .profilePicture)
     }
     
@@ -256,8 +266,14 @@ struct PostUser: Identifiable, Codable {
 }
 
 struct PostUserMetadata: Codable {
-    let username: String
-    let gender: String
+    let username: String?
+    let gender: String?
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        username = try container.decodeIfPresent(String.self, forKey: .username)
+        gender = try container.decodeIfPresent(String.self, forKey: .gender)
+    }
 }
 
 struct PostUserComment: Codable {
@@ -376,5 +392,91 @@ enum CategoryType: String, CaseIterable, Identifiable {
         case .person:
             return "person"
         }
+    }
+}
+
+// MARK: - Like/Dislike Response Models
+
+struct PostLikeResponse: Codable {
+    let success: Bool
+    let data: PostLikeData
+    let errors: [String]
+    let timestamp: String
+    let message: String
+}
+
+struct PostDislikeResponse: Codable {
+    let success: Bool
+    let data: PostDislikeData
+    let errors: [String]
+    let timestamp: String
+    let message: String
+}
+
+struct PostLikeData: Codable {
+    let id: String
+    let title: String
+    let description: String
+    let imgs: [String]
+    let videos: [String]
+    let likes: [String]
+    let dislikes: [String]
+    let recommended: String
+    let shares: [String]
+    let reviews: [String]
+    let user: String
+    let price: Int?
+    let rating: Int
+    let categoryType: String
+    let category: String?
+    let subcategory: String?
+    let brand: String?
+    let product: String?
+    let slug: String
+    let createdAt: String
+    let updatedAt: String
+    let likesCount: Int
+    let dislikesCount: Int
+    let sharesCount: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case title, description, imgs, videos, likes, dislikes, recommended, shares, reviews, user
+        case price, rating, categoryType, category, subcategory, brand, product
+        case slug, createdAt, updatedAt, likesCount, dislikesCount, sharesCount
+    }
+}
+
+struct PostDislikeData: Codable {
+    let id: String
+    let title: String
+    let description: String
+    let imgs: [String]
+    let videos: [String]
+    let likes: [String]
+    let dislikes: [String]
+    let recommended: String
+    let shares: [String]
+    let reviews: [String]
+    let user: String
+    let price: Int?
+    let rating: Int
+    let categoryType: String
+    let category: String?
+    let subcategory: String?
+    let brand: String?
+    let product: String?
+    let slug: String
+    let createdAt: String
+    let updatedAt: String
+    let likesCount: Int
+    let dislikesCount: Int
+    let sharesCount: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case title, description, imgs, videos, likes, dislikes, recommended, shares, reviews, user
+        case price, rating, categoryType, category, subcategory, brand, product
+        case slug, createdAt, updatedAt, likesCount, dislikesCount, sharesCount
     }
 }
