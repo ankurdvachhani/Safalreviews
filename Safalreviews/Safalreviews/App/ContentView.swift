@@ -157,6 +157,14 @@ struct ContentView: View {
                         Image(systemName: "house")
                         Text("Home")
                     }
+                
+                LatestReviewsView()
+                    .tag(AppState.Tab.reviews)
+                    .tabItem {
+                        Image(systemName: "star")
+                        Text("LatestReviews")
+                    }
+                
 //
 //                
 //                if TokenManager.shared.loadCurrentUser()?.role != "Patient" {

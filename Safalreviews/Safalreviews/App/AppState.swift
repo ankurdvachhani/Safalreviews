@@ -67,6 +67,7 @@ extension AppState {
         case home
         case settings
         case IncidentList
+        case reviews
         
         var title: String {
             switch self {
@@ -75,6 +76,7 @@ extension AppState {
             case .home: return "Home"
             case .IncidentList: return "IncidentList"
             case .settings: return "Settings"
+            case .reviews: return "Reviews"
             }
         }
         
@@ -85,6 +87,7 @@ extension AppState {
             case .home: return "house"
             case .IncidentList:return "note.text.badge.plus"
             case .settings: return "gear"
+                case .reviews: return "star"
             }
         }
     }

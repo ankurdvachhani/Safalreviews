@@ -117,17 +117,17 @@ struct HomeView: View {
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 
-//                // Sort Button
-//                Button {
-//                    showingSortSheet = true
-//                } label: {
-//                    VStack(spacing: 2) {
-//                        Image(systemName: "arrow.up.arrow.down.circle")
-//                            .font(.system(size: 20, weight: .medium))
-//                            .foregroundColor(Color.dynamicAccent)
-//                    }
-//                }
-//                
+                // Sort Button
+                Button {
+                    showingSortSheet = true
+                } label: {
+                    VStack(spacing: 2) {
+                        Image(systemName: "arrow.up.arrow.down.circle")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(Color.dynamicAccent)
+                    }
+                }
+                
                 // Filter Button
                 Button {
                     showingFilterSheet = true
