@@ -225,6 +225,7 @@ struct CategoryFilterButton: View {
 struct PostCardView: View {
     let post: Post
     let viewModel: LatestReviewsViewModel
+    @State private var isDescriptionExpanded = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -262,17 +263,17 @@ struct PostCardView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         HStack {
-            // Rating
-            HStack(spacing: 4) {
-                ForEach(1...5, id: \.self) { index in
-                    Image(systemName: index <= post.rating ? "star.fill" : "star")
-                        .font(.system(size: 14))
-                        .foregroundColor(index <= post.rating ? .yellow : .gray)
+                            // Rating
+                HStack(spacing: 4) {
+                    ForEach(1...5, id: \.self) { index in
+                        Image(systemName: index <= post.rating ? "star.fill" : "star")
+                            .font(.system(size: 14))
+                            .foregroundColor(index <= post.rating ? .yellow : .gray)
+                    }
+                    Text("(\(post.rating)/5)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                Text(post.ratingText)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
             
             Spacer()
             
@@ -284,23 +285,24 @@ struct PostCardView: View {
                     .foregroundColor(.green)
             }
             
-            // Safal tag
+            // Safal/UnSafal tag
             HStack(spacing: 4) {
-                Image("suf")
+                Image(post.recommended.lowercased() == "safal" ? "suf" : "unsf")
                     .font(.system(size: 10))
-                Text("Safal")
-                    .font(.caption2)
-                    .fontWeight(.medium)
+//                Text(post.recommended.capitalized)
+//                    .font(.caption2)
+//                    .fontWeight(.medium)
             }
-            .foregroundColor(.white)
+            .foregroundColor(.primary)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
+           
         }
     }
     
     // MARK: - Product Metadata Section
     private var productMetadataSection: some View {
-        HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             // Category type tag
             HStack(spacing: 4) {
                 Image(systemName: "tag.fill")
@@ -315,45 +317,60 @@ struct PostCardView: View {
             .background(Color.blue)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             
-            // Product details
-            Text(post.categoryName)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // Product details - First line
+            HStack(spacing: 4) {
+                Text(post.categoryName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("•")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(post.subcategoryName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             
-            Text("•")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(post.subcategoryName)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text("•")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(post.brandName)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text("•")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text(post.productName)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // Product details - Second line
+            HStack(spacing: 4) {
+                Text(post.brandName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("•")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(post.productName)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
-        .lineLimit(1)
     }
     
     // MARK: - Description Section
     private var descriptionSection: some View {
-        Text(post.description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
-            .font(.body)
-            .foregroundColor(.primary)
-            .lineLimit(4)
-            .multilineTextAlignment(.leading)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(post.description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
+                .font(.body)
+                .foregroundColor(.primary)
+                .lineLimit(isDescriptionExpanded ? nil : 3)
+                .multilineTextAlignment(.leading)
+            
+            if post.description.count > 150 {
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isDescriptionExpanded.toggle()
+                    }
+                }) {
+                    Text(isDescriptionExpanded ? "See less" : "See more")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(Color.dynamicAccent)
+                }
+            }
+        }
     }
     
     // MARK: - Author Section
@@ -434,13 +451,26 @@ struct PostCardView: View {
     
     // MARK: - Interaction Section
     private var interactionSection: some View {
-        HStack {
-            // Likes
-            VStack(spacing: 4) {
-                Text("\(post.likesCount)")
+        VStack(spacing: 8) {
+            // Engagement metrics (like the image shows)
+            HStack {
+                Text("👍 \(post.likesCount) Likes")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
+                Spacer()
+                
+                Text("\(post.reviews.count) comments")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Divider()
+                .background(Color(.systemGray4))
+            
+            // Interaction buttons (simple style like the image)
+            HStack {
+                // Like Button
                 Button(action: {
                     Task {
                         await viewModel.likePost(post)
@@ -450,20 +480,14 @@ struct PostCardView: View {
                         Image(systemName: post.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup")
                             .font(.system(size: 16))
                         Text("Like")
-                            .font(.caption)
+                            .font(.subheadline)
                     }
                     .foregroundColor(post.isLiked ? .blue : .secondary)
                 }
-            }
-            
-            Spacer()
-            
-            // Dislikes
-            VStack(spacing: 4) {
-                Text("\(post.dislikesCount)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
                 
+                Spacer()
+                
+                // Dislike Button
                 Button(action: {
                     Task {
                         await viewModel.dislikePost(post)
@@ -473,32 +497,29 @@ struct PostCardView: View {
                         Image(systemName: post.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
                             .font(.system(size: 16))
                         Text("Dislike")
-                            .font(.caption)
+                            .font(.subheadline)
                     }
                     .foregroundColor(post.isDisliked ? .red : .secondary)
                 }
-            }
-            
-            Spacer()
-            
-            // Comments
-            VStack(spacing: 4) {
-                Text("\(post.reviews.count)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
                 
+                Spacer()
+                
+                // Comment Button
                 Button(action: {
                     viewModel.commentOnPost(post)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
                             .font(.system(size: 16))
-                        Text("Comments")
-                            .font(.caption)
+                        Text("Comment")
+                            .font(.subheadline)
                     }
                     .foregroundColor(.secondary)
                 }
             }
+            
+            Divider()
+                .background(Color(.systemGray4))
         }
         .padding(.top, 8)
     }

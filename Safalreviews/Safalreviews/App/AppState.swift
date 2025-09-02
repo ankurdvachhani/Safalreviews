@@ -87,7 +87,7 @@ extension AppState {
             case .home: return "house"
             case .IncidentList:return "note.text.badge.plus"
             case .settings: return "gear"
-                case .reviews: return "star"
+            case .reviews: return "star"
             }
         }
     }

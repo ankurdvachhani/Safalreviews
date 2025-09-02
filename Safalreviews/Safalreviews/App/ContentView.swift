@@ -162,7 +162,7 @@ struct ContentView: View {
                     .tag(AppState.Tab.reviews)
                     .tabItem {
                         Image(systemName: "star")
-                        Text("LatestReviews")
+                        Text("Latest Reviews")
                     }
                 
 //
