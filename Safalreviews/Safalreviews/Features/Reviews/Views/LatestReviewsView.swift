@@ -286,7 +286,7 @@ struct PostCardView: View {
             
             // Safal tag
             HStack(spacing: 4) {
-                Image(systemName: "leaf.fill")
+                Image("suf")
                     .font(.system(size: 10))
                 Text("Safal")
                     .font(.caption2)
@@ -295,8 +295,6 @@ struct PostCardView: View {
             .foregroundColor(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.green)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
     
