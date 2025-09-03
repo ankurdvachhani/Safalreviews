@@ -111,7 +111,7 @@ struct LatestReviewsView: View {
     // MARK: - Posts List View
     private var postsListView: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            LazyVStack(spacing: 0) {
                 ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
                     PostCardView(post: post, viewModel: viewModel)
                         .onAppear {
@@ -127,8 +127,7 @@ struct LatestReviewsView: View {
                     loadingIndicator
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            
         }
         .refreshable {
             await viewModel.refreshPosts()
@@ -254,10 +253,9 @@ struct PostCardView: View {
             // Interaction buttons
             interactionSection
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
     // MARK: - Header Section
@@ -422,14 +420,14 @@ struct PostCardView: View {
                                         .scaleEffect(0.8)
                                 )
                         }
-                        .frame(height: 200)
+                        .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
                         .clipped()
                     }
                     
                     ForEach(post.videos, id: \.self) { videoUrl in
                         Rectangle()
                             .fill(Color(.systemGray5))
-                            .frame(height: 200)
+                            .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
                             .overlay(
                                 VStack {
                                     Image(systemName: "play.circle.fill")
@@ -442,9 +440,10 @@ struct PostCardView: View {
                             )
                     }
                 }
-                .frame(height: 200)
+                .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
                 .tabViewStyle(PageTabViewStyle())
                 .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+                .padding(.horizontal, -16) // Extend to full width
             }
         }
     }

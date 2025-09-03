@@ -89,7 +89,7 @@ struct HomeView: View {
     
     // MARK: - Search and Sort Section
     private var searchAndSortSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             HStack(spacing: 12) {
                 // Search Bar
                 HStack {
@@ -148,40 +148,40 @@ struct HomeView: View {
                 }
             }
             
-            // Results count
+            // Results count and sort indicator in one row
             HStack {
                 Text("\(reviewStore.totalProducts) results found")
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Spacer()
-            }
-            
-            // Sort indicator
-            if selectedSortOption != .dateDesc {
-                HStack {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .foregroundColor(Color.dynamicAccent)
-                        .font(.caption2)
-                    
-                    Text("Sorted by: \(selectedSortOption.rawValue)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Button("Reset") {
-                        selectedSortOption = .dateDesc
-                        Task {
-                            await reviewStore.updateSortOption(.dateDesc, filter: currentFilter)
+                
+                // Sort indicator
+                if selectedSortOption != .dateDesc {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.up.arrow.down")
+                            .foregroundColor(Color.dynamicAccent)
+                            .font(.caption2)
+                        
+                        Text("Sorted by: \(selectedSortOption.rawValue)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Button("Reset") {
+                            selectedSortOption = .dateDesc
+                            Task {
+                                await reviewStore.updateSortOption(.dateDesc, filter: currentFilter)
+                            }
                         }
+                        .font(.caption)
+                        .foregroundColor(Color.dynamicAccent)
                     }
-                    .font(.caption)
-                    .foregroundColor(Color.dynamicAccent)
                 }
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
     
     // MARK: - Filtered Products
@@ -197,7 +197,7 @@ struct HomeView: View {
     // MARK: - Products List
     private var productsList: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            LazyVStack(spacing: 8) {
                 ForEach(filteredProducts) { product in
                     ProductReviewCard(product: product)
                         .task {
@@ -214,10 +214,11 @@ struct HomeView: View {
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical, 8)
                 }
             }
-            .padding()
+            .padding(.horizontal)
+            .padding(.top, 4)
         }
         .refreshable {
             try? await Task.sleep(nanoseconds: 500000000) // Add a small delay
@@ -267,8 +268,8 @@ struct ProductReviewCard: View {
     let product: ProductReview
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Product Image
+        HStack(alignment: .top, spacing: 12) {
+            // Product Image (Left Side)
             ZStack(alignment: .topTrailing) {
                 if let imageUrl = product.displayImage {
                     AsyncImage(url: URL(string: imageUrl)) { image in
@@ -280,42 +281,27 @@ struct ProductReviewCard: View {
                             .fill(Color(.systemGray5))
                             .overlay(
                                 Image(systemName: "photo")
-                                    .font(.system(size: 30))
+                                    .font(.system(size: 20))
                                     .foregroundColor(.secondary)
                             )
                     }
-                    .frame(height: 200)
+                    .frame(width: 80, height: 80)
                     .clipped()
                 } else {
                     Rectangle()
                         .fill(Color(.systemGray5))
-                        .frame(height: 200)
+                        .frame(width: 80, height: 80)
                         .overlay(
                             Image(systemName: "photo")
-                                .font(.system(size: 30))
+                                .font(.system(size: 20))
                                 .foregroundColor(.secondary)
                         )
                 }
-                
-//                // Product badge
-//                HStack(spacing: 4) {
-//                    Image(systemName: "cube.box")
-//                        .font(.caption2)
-//                    Text("Product")
-//                        .font(.caption2)
-//                        .fontWeight(.medium)
-//                }
-//                .foregroundColor(.white)
-//                .padding(.horizontal, 8)
-//                .padding(.vertical, 4)
-//                .background(Color.green)
-//                .clipShape(Capsule())
-//                .padding(8)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             
-            // Product Info
-            VStack(alignment: .leading, spacing: 8) {
+            // Product Info (Right Side)
+            VStack(alignment: .leading, spacing: 6) {
                 // Title
                 Text(product.name)
                     .font(.headline)
@@ -332,79 +318,72 @@ struct ProductReviewCard: View {
                 }
                 
                 // Rating
-                HStack {
-                    Text("Rating:")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
+                HStack(spacing: 4) {
                     HStack(spacing: 2) {
                         ForEach(0..<5) { index in
                             Image(systemName: index < Int(product.averageRating) ? "star.fill" : "star")
-                                .font(.caption)
+                                .font(.caption2)
                                 .foregroundColor(index < Int(product.averageRating) ? .yellow : .gray)
                         }
                     }
                     
                     Text("(\(product.totalRatings))")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 
                 // Category, Subcategory, Brand
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Category: \(product.brand.subCategory.category.name)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Category: \(product.brand.subCategory.category.name)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     
-                    HStack {
-                        Text("Subcategory: \(product.brand.subCategory.name)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
+                    Text("Subcategory: \(product.brand.subCategory.name)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     
-                    HStack {
-                        Text("Brand: \(product.brand.name)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                    }
+                    Text("Brand: \(product.brand.name)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
             }
+            
+            Spacer()
         }
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
 // MARK: - Product Review Shimmer Card
 struct ProductReviewShimmerCard: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Image shimmer
+        HStack(alignment: .top, spacing: 12) {
+            // Image shimmer (Left Side)
             Rectangle()
                 .fill(Color(.systemGray5))
-                .frame(height: 200)
+                .frame(width: 80, height: 80)
                 .homeshimmerEffect()
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             
-            // Content shimmer
-            VStack(alignment: .leading, spacing: 8) {
+            // Content shimmer (Right Side)
+            VStack(alignment: .leading, spacing: 6) {
                 ProductReviewShimmerBox(width: 200, height: 20)
                 ProductReviewShimmerBox(width: 150, height: 16)
                 ProductReviewShimmerBox(width: 120, height: 14)
                 ProductReviewShimmerBox(width: 100, height: 14)
             }
+            
+            Spacer()
         }
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
