@@ -500,12 +500,13 @@ struct IncidentStatsItem: Codable, Identifiable {
     let status: String
     let patientId: String
     let patientName: String
+    let patientData: PatientData? // New field for patient data including priority
     let id: String
     let totalDrainageCount: Int
     let totalAmountCount: Int
     
     enum CodingKeys: String, CodingKey {
-        case name, incidentId, status, patientId, patientName
+        case name, incidentId, status, patientId, patientName, patientData
         case id = "_id"
         case totalDrainageCount, totalAmountCount
     }

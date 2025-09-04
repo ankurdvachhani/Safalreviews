@@ -37,7 +37,7 @@ struct UploadUrlData: Codable {
 }
 
 struct UploadUrlRequest: Codable {
-    let files: [FileInfo]
+    let fileName: [FileInfo]
     let folderName: String
 }
 

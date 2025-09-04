@@ -29,7 +29,7 @@ enum APIConfig {
         static let notifications = "/api/notification"
         static let resetNotificationCount = "/api/notification"
         static let notificationSettings = "/api/notification/config"
-        static let getUploadUrls = "/api/upload"
+        static let getUploadUrls = "/api/s3/upload-url"
         static let otpVerification = "/api/auth/verify"
        
 

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Priority Enum
 enum Priority: String, CaseIterable, Codable {
@@ -24,6 +25,17 @@ enum Priority: String, CaseIterable, Codable {
         return self.rawValue
     }
     
+    var swiftUIColor: Color {
+        switch self {
+        case .p1: return Color(hex: "#ef4444")
+        case .p2: return Color(hex: "#f97316")
+        case .p3: return Color(hex: "#eab308")
+        case .p4: return Color(hex: "#0ea5e9")
+        case .p5: return Color(hex: "#22c55e")
+        case .none: return Color(hex: "#6b7280")
+        }
+    }
+    
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let rawValue = try container.decode(String.self)
@@ -46,7 +58,7 @@ struct PatientListResponse: Codable {
     let message: String
 }
 
-struct PatientData: Codable, Identifiable {
+struct PatientData: Codable, Identifiable, Equatable {
     let id: String
     let firstName: String
     let lastName: String
@@ -69,7 +81,7 @@ struct PatientData: Codable, Identifiable {
     }
 }
 
-struct PatientMetadata: Codable {
+struct PatientMetadata: Codable, Equatable {
     let organizationId: String
     let priority: Priority?
     let ncpiNumber: String?

@@ -1024,6 +1024,8 @@ struct AddDrainageView: View {
                         Text(errorMessage)
                     }
                 }
+                .toast(message: $store.errorMessage, type: .error)
+                .toast(message: $store.successMessage, type: .success)
                 .sheet(isPresented: $showPatientSelection) {
                     PatientSelectionView(
                         isPresented: $showPatientSelection,
@@ -1199,6 +1201,7 @@ struct AddDrainageView: View {
                 userId: entry?.userId ?? "",
                 patientId: TokenManager.shared.loadCurrentUser()?.role == "Patient" ? TokenManager.shared.loadCurrentUser()?.userSlug ?? "" : patientId.trimmingCharacters(in: .whitespacesAndNewlines),
                 patientName: TokenManager.shared.loadCurrentUser()?.role == "Patient" ? TokenManager.shared.getUserName() ?? "" : patientName.trimmingCharacters(in: .whitespacesAndNewlines),
+                patientData: entry?.patientData, // Preserve existing patient data if editing
                 amount: Double(amount) ?? 0,
                 amountUnit: amountUnit,
                 location: location,
@@ -1235,7 +1238,8 @@ struct AddDrainageView: View {
             } else {
                 await store.addEntry(newEntry)
             }
-
+            // Dismiss after 2 seconds
+            try? await Task.sleep(nanoseconds: 2 * 1000000000) // 2 seconds delay
             NavigationManager.shared.dismiss()
             // try? await Task.sleep(nanoseconds: 1 * 1_000_000_000) // Add a small delay
             NotificationCenter.default.post(name: .RefreshDrainageList, object: nil)

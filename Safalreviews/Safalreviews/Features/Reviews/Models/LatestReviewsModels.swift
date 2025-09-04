@@ -480,3 +480,85 @@ struct PostDislikeData: Codable {
         case slug, createdAt, updatedAt, likesCount, dislikesCount, sharesCount
     }
 }
+
+// MARK: - Mock Data for Preview
+extension Post {
+    static var mockPost: Post {
+        let mockData = """
+        {
+            "_id": "mock-post-id",
+            "title": "Sample Product Review",
+            "description": "This is a sample product review with detailed information about the product quality, features, and user experience.",
+            "imgs": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
+            "videos": [],
+            "likes": [],
+            "dislikes": [],
+            "recommended": "safal",
+            "shares": [],
+            "reviews": [],
+            "user": {
+                "_id": "user1",
+                "companySlug": "company1",
+                "applicationSlug": "app1",
+                "firstName": "John",
+                "lastName": "Doe",
+                "email": "john.doe@example.com",
+                "emailVerifiedId": "verified1",
+                "phoneNumber": "1234567890",
+                "role": "User",
+                "country": "USA",
+                "state": "CA",
+                "userSlug": "john-doe",
+                "metadata": {
+                    "username": "johndoe",
+                    "gender": "male"
+                },
+                "status": "Active",
+                "applicationOnly": true,
+                "comment": [],
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "updatedAt": "2024-01-01T00:00:00.000Z",
+                "isDeleted": false,
+                "profilePicture": "https://example.com/profile.jpg"
+            },
+            "price": 99,
+            "rating": 4,
+            "categoryType": "product",
+            "category": {
+                "_id": "cat1",
+                "name": "Electronics",
+                "slug": "electronics"
+            },
+            "subcategory": {
+                "_id": "subcat1",
+                "name": "Smartphones",
+                "slug": "smartphones"
+            },
+            "brand": {
+                "_id": "brand1",
+                "name": "Sample Brand",
+                "slug": "sample-brand"
+            },
+            "product": {
+                "_id": "prod1",
+                "name": "Sample Product",
+                "slug": "sample-product"
+            },
+            "slug": "sample-product-review",
+            "createdAt": "2024-01-01T00:00:00.000Z",
+            "updatedAt": "2024-01-01T00:00:00.000Z",
+            "likesCount": 0,
+            "dislikesCount": 0,
+            "sharesCount": 0,
+            "likesDetails": [],
+            "dislikesDetails": [],
+            "sharesDetails": []
+        }
+        """.data(using: .utf8)!
+        
+        let decoder = JSONDecoder()
+        return try! decoder.decode(Post.self, from: mockData)
+    }
+}
+
+

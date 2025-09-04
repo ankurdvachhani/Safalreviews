@@ -74,6 +74,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
     let userId: String
     let patientId: String?
     let patientName: String?
+    let patientData: PatientData? // New field for patient data including priority
     var amount: Double
     var amountUnit: String
     var location: String
@@ -113,6 +114,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
         case userId
         case patientId = "patientId"
         case patientName
+        case patientData
         case amount
         case amountUnit
         case location
@@ -153,6 +155,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
         userId = try container.decode(String.self, forKey: .userId)
         patientId = try container.decode(String.self, forKey: .patientId)
         patientName = try container.decode(String.self, forKey: .patientName)
+        patientData = try container.decodeIfPresent(PatientData.self, forKey: .patientData)
         amount = try container.decode(Double.self, forKey: .amount)
         amountUnit = try container.decode(String.self, forKey: .amountUnit)
         location = try container.decode(String.self, forKey: .location)
@@ -191,6 +194,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
          userId: String = "",
          patientId: String,
          patientName: String,
+         patientData: PatientData? = nil,
          amount: Double,
          amountUnit: String,
          location: String,
@@ -227,6 +231,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
         self.userId = userId
         self.patientId = patientId
         self.patientName = patientName
+        self.patientData = patientData
         self.amount = amount
         self.amountUnit = amountUnit
         self.location = location
@@ -266,6 +271,7 @@ struct DrainageEntry: Identifiable, Codable, Equatable {
             lhs.userId == rhs.userId &&
             lhs.patientId == rhs.patientId &&
             lhs.patientName == rhs.patientName &&
+            lhs.patientData == rhs.patientData &&
             lhs.amount == rhs.amount &&
             lhs.amountUnit == rhs.amountUnit &&
             lhs.location == rhs.location &&

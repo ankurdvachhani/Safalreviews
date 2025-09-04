@@ -786,6 +786,15 @@ struct PesentDrainageRow: View {
             // Patient Info Row (only show if role is not Patient)
             if shouldShowPatientName, let patientName = entry.patientName, !patientName.isEmpty {
                 HStack(alignment: .firstTextBaseline) {
+                    // Priority color dot (only show if priority exists and is not none)
+                    if let patientData = entry.patientData,
+                       let priority = patientData.metadata.priority,
+                       priority != .none {
+                        Circle()
+                            .fill(priority.swiftUIColor)
+                            .frame(width: 8, height: 8)
+                    }
+                    
                     Image(systemName: "person.circle.fill")
                         .font(.system(size: 16))
                         .foregroundColor(.dynamicAccent)

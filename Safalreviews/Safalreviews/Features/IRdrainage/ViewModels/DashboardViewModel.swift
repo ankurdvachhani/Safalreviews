@@ -699,6 +699,7 @@ class DashboardViewModel: ObservableObject {
                 userId: "user1",
                 patientId: "patient1",
                 patientName: "John Doe",
+                patientData: nil, // Mock data doesn't include patient data
                 amount: 85.0,
                 amountUnit: "ml",
                 location: "Chest",
@@ -718,6 +719,7 @@ class DashboardViewModel: ObservableObject {
                 userId: "user1",
                 patientId: "patient2",
                 patientName: "Jane Smith",
+                patientData: nil, // Mock data doesn't include patient data
                 amount: 45.0,
                 amountUnit: "ml",
                 location: "Abdomen",

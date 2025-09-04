@@ -157,7 +157,7 @@ actor ProfileService: ProfileServicing {
         )
         
         let uploadRequest = UploadUrlRequest(
-            files: [fileInfo],
+            fileName: [fileInfo],
             folderName: folderName
         )
         

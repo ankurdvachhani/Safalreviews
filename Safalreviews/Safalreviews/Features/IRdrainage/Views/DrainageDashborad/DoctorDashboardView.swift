@@ -156,19 +156,19 @@ struct DoctorDashboardView: View {
             }
             
             
-            StatCard(
-                title: "Total Drainage Count",
-                value: "\(viewModel.doctorDashboardData?.stats.totalDrainageCount ?? 0)",
-                icon: "list.clipboard.fill",
-                color: .green
-            )
-            
-            StatCard(
-                title: "Total Drainage Amount",
-                value: String(format: "%.0f ml", Double(viewModel.doctorDashboardData?.stats.totalDrainageAmount ?? 0)),
-                icon: "drop.fill",
-                color: .purple
-            )
+//            StatCard(
+//                title: "Total Drainage Count",
+//                value: "\(viewModel.doctorDashboardData?.stats.totalDrainageCount ?? 0)",
+//                icon: "list.clipboard.fill",
+//                color: .green
+//            )
+//            
+//            StatCard(
+//                title: "Total Drainage Amount",
+//                value: String(format: "%.0f ml", Double(viewModel.doctorDashboardData?.stats.totalDrainageAmount ?? 0)),
+//                icon: "drop.fill",
+//                color: .purple
+//            )
         }
     }
     
@@ -732,10 +732,21 @@ struct ActiveIncidentRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                     
-                    Text(incident.patientName)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        // Priority color dot (only show if priority exists and is not none)
+                        if let patientData = incident.patientData,
+                           let priority = patientData.metadata.priority,
+                           priority != .none {
+                            Circle()
+                                .fill(priority.swiftUIColor)
+                                .frame(width: 6, height: 6)
+                        }
+                        
+                        Text(incident.patientName)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
                     
                     Text("ID: \(incident.incidentId)")
                         .font(.caption2)

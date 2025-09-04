@@ -129,7 +129,25 @@ struct DrainageDetailView: View {
             SectionTitle(text: "Patient")
             
             DrainageDetailRow(label: "Patient ID", value: drainageEntry.patientId ?? "")
-            DrainageDetailRow(label: "Patient Name", value: drainageEntry.patientName ?? "")
+            
+            // Custom patient name row with priority dot
+            HStack {
+                // Priority color dot (only show if priority exists and is not none)
+                if let patientData = drainageEntry.patientData,
+                   let priority = patientData.metadata.priority,
+                   priority != .none {
+                    Circle()
+                        .fill(priority.swiftUIColor)
+                        .frame(width: 8, height: 8)
+                }
+                
+                Text("Patient Name")
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text(drainageEntry.patientName ?? "")
+                    .foregroundColor(.primary)
+            }
+            .padding(.vertical, 4)
         }
     }
     
@@ -658,6 +676,7 @@ struct PainLevelView1: View {
             userId: "1",
             patientId: "PAT-001",
             patientName: "John Doe",
+            patientData: nil, // Preview data doesn't include patient data
             amount: 150,
             amountUnit: "ml",
             location: "Right Chest",

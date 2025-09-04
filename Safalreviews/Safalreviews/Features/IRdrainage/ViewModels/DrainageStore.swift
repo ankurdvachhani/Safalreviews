@@ -523,7 +523,7 @@ class DrainageStore: ObservableObject {
                 
                 let response = try decoder.decode(SingleDrainageResponse.self, from: data)
                 entries.insert(response.data, at: 0)
-                successMessage = "Entry added successfully"
+                successMessage = "\(response.data.drainageId ?? "") Entry added successfully"
                
             } else {
                 throw NetworkError.apiError("Failed to add entry: \(httpResponse.statusCode)")
@@ -628,7 +628,7 @@ class DrainageStore: ObservableObject {
                 if let index = entries.firstIndex(where: { $0.id == entry.id }) {
                     entries[index] = response.data
                 }
-                successMessage = "Entry updated successfully"
+                successMessage = "\(response.data.drainageId ?? "") Entry updated successfully"
               
             } else {
                 throw NetworkError.apiError("Failed to update entry: \(httpResponse.statusCode)")
@@ -680,7 +680,7 @@ class DrainageStore: ObservableObject {
         )
         
         let uploadRequest = UploadUrlRequest(
-            files: [fileInfo],
+            fileName: [fileInfo],
             folderName: folderName
         )
         

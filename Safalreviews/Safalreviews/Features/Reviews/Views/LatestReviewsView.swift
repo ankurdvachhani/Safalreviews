@@ -10,6 +10,8 @@ struct LatestReviewsView: View {
     @State private var showingFullScreenMedia = false
     @State private var selectedMediaIndex = 0
     @State private var selectedMediaURLs: [String] = []
+    @State private var showingCommentSheet = false
+    @State private var selectedPostForComments: Post?
     
     var body: some View {
         NavigationView {
@@ -40,6 +42,13 @@ struct LatestReviewsView: View {
                 initialIndex: selectedMediaIndex,
                 isPresented: $showingFullScreenMedia
             )
+        }
+        .sheet(isPresented: $showingCommentSheet) {
+            if let post = selectedPostForComments {
+                CommentSheet(post: post)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
     
@@ -164,6 +173,10 @@ struct LatestReviewsView: View {
                             selectedMediaURLs = mediaURLs
                             selectedMediaIndex = selectedIndex
                             showingFullScreenMedia = true
+                        },
+                        onCommentTap: { post in
+                            selectedPostForComments = post
+                            showingCommentSheet = true
                         }
                     )
                     .onAppear {
@@ -289,6 +302,7 @@ struct PostCardView: View {
     let post: Post
     let viewModel: LatestReviewsViewModel
     let onMediaTap: ([String], Int) -> Void
+    let onCommentTap: (Post) -> Void
     @State private var isDescriptionExpanded = false
     
     var body: some View {
@@ -579,7 +593,7 @@ struct PostCardView: View {
                 
                 // Comment Button
                 Button(action: {
-                    viewModel.commentOnPost(post)
+                    onCommentTap(post)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
