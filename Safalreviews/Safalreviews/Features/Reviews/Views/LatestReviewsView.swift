@@ -4,23 +4,67 @@ struct LatestReviewsView: View {
     @StateObject private var viewModel = LatestReviewsViewModel()
     @State private var searchText = ""
     @State private var showingSearchBar = false
+    @State private var scrollOffset: CGFloat = 0
+    @State private var isHeaderVisible = true
+    @State private var lastScrollOffset: CGFloat = 0
+    @State private var showingFullScreenMedia = false
+    @State private var selectedMediaIndex = 0
+    @State private var selectedMediaURLs: [String] = []
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // Header with search bar
-                headerView
+                if isHeaderVisible {
+                    headerView
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 // Category filter tabs
-                categoryFilterView
+                if isHeaderVisible {
+                    categoryFilterView
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
                 // Main content
                 mainContentView
             }
             .navigationBarHidden(true)
             .background(Color(.systemGroupedBackground))
+            .animation(.easeInOut(duration: 0.3), value: isHeaderVisible)
         }
         .navigationViewStyle(StackNavigationViewStyle())
+        .fullScreenCover(isPresented: $showingFullScreenMedia) {
+            FullScreenMediaView(
+                mediaURLs: selectedMediaURLs,
+                initialIndex: selectedMediaIndex,
+                isPresented: $showingFullScreenMedia
+            )
+        }
+    }
+    
+    // MARK: - Scroll Handling
+    private func handleScrollOffset(_ offset: CGFloat) {
+        print("Scroll offset: \(offset)") // Debug print
+        
+        let scrollDelta = offset - lastScrollOffset
+        lastScrollOffset = offset
+        
+        let threshold: CGFloat = 10
+        
+        if scrollDelta < -threshold && isHeaderVisible {
+            print("Hiding header - scrolling down") // Debug print
+            // Scrolling down - hide header
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isHeaderVisible = false
+            }
+        } else if scrollDelta > threshold && !isHeaderVisible {
+            print("Showing header - scrolling up") // Debug print
+            // Scrolling up - show header
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isHeaderVisible = true
+            }
+        }
     }
     
     // MARK: - Header View
@@ -113,21 +157,41 @@ struct LatestReviewsView: View {
         ScrollView {
             LazyVStack(spacing: 0) {
                 ForEach(Array(viewModel.posts.enumerated()), id: \.element.id) { index, post in
-                    PostCardView(post: post, viewModel: viewModel)
-                        .onAppear {
-                            if index == viewModel.posts.count - 1 {
-                                Task {
-                                    await viewModel.loadMoreIfNeeded(currentItem: post)
-                                }
+                    PostCardView(
+                        post: post, 
+                        viewModel: viewModel,
+                        onMediaTap: { mediaURLs, selectedIndex in
+                            selectedMediaURLs = mediaURLs
+                            selectedMediaIndex = selectedIndex
+                            showingFullScreenMedia = true
+                        }
+                    )
+                    .onAppear {
+                        if index == viewModel.posts.count - 1 {
+                            Task {
+                                await viewModel.loadMoreIfNeeded(currentItem: post)
                             }
                         }
+                    }
                 }
                 
                 if viewModel.isLoading && !viewModel.posts.isEmpty {
                     loadingIndicator
                 }
             }
-            
+            .background(
+                GeometryReader { geometry in
+                    let offset = geometry.frame(in: .global).minY
+                    Color.clear
+                        .onAppear {
+                            scrollOffset = offset
+                        }
+                        .onChange(of: offset) { newOffset in
+                            scrollOffset = newOffset
+                            handleScrollOffset(newOffset)
+                        }
+                }
+            )
         }
         .refreshable {
             await viewModel.refreshPosts()
@@ -224,6 +288,7 @@ struct CategoryFilterButton: View {
 struct PostCardView: View {
     let post: Post
     let viewModel: LatestReviewsViewModel
+    let onMediaTap: ([String], Int) -> Void
     @State private var isDescriptionExpanded = false
     
     var body: some View {
@@ -407,7 +472,7 @@ struct PostCardView: View {
         Group {
             if post.hasImages || post.hasVideos {
                 TabView {
-                    ForEach(post.imgs, id: \.self) { imageUrl in
+                    ForEach(Array(post.imgs.enumerated()), id: \.element) { index, imageUrl in
                         AsyncImage(url: URL(string: imageUrl)) { image in
                             image
                                 .resizable()
@@ -422,9 +487,13 @@ struct PostCardView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
                         .clipped()
+                        .onTapGesture {
+                            let allMedia = post.imgs + post.videos
+                            onMediaTap(allMedia, index)
+                        }
                     }
                     
-                    ForEach(post.videos, id: \.self) { videoUrl in
+                    ForEach(Array(post.videos.enumerated()), id: \.element) { index, videoUrl in
                         Rectangle()
                             .fill(Color(.systemGray5))
                             .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
@@ -438,6 +507,11 @@ struct PostCardView: View {
                                         .foregroundColor(.white)
                                 }
                             )
+                            .onTapGesture {
+                                let allMedia = post.imgs + post.videos
+                                let videoIndex = post.imgs.count + index
+                                onMediaTap(allMedia, videoIndex)
+                            }
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 300, maxHeight: 300)
@@ -526,4 +600,161 @@ struct PostCardView: View {
 
 #Preview {
     LatestReviewsView()
+}
+
+// MARK: - Scroll Offset Preference Key
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+// MARK: - Full Screen Media View
+struct FullScreenMediaView: View {
+    let mediaURLs: [String]
+    let initialIndex: Int
+    @Binding var isPresented: Bool
+    @State private var currentIndex: Int
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    init(mediaURLs: [String], initialIndex: Int, isPresented: Binding<Bool>) {
+        self.mediaURLs = mediaURLs
+        self.initialIndex = initialIndex
+        self._isPresented = isPresented
+        self._currentIndex = State(initialValue: initialIndex)
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header with close button and counter
+                HStack {
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(currentIndex + 1) of \(mediaURLs.count)")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
+                    Spacer()
+                    
+                    // Placeholder for balance
+                    Color.clear
+                        .frame(width: 44, height: 44)
+                }
+                .padding()
+                
+                // Media content
+                TabView(selection: $currentIndex) {
+                    ForEach(Array(mediaURLs.enumerated()), id: \.element) { index, url in
+                        ZoomableImageView(imageURL: url)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .onChange(of: currentIndex) { _ in
+                    // Reset zoom when changing images
+                    scale = 1.0
+                    lastScale = 1.0
+                    offset = .zero
+                    lastOffset = .zero
+                }
+            }
+        }
+        .statusBarHidden()
+    }
+}
+
+// MARK: - Zoomable Image View
+struct ZoomableImageView: View {
+    let imageURL: String
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    var body: some View {
+        GeometryReader { geometry in
+            AsyncImage(url: URL(string: imageURL)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        SimultaneousGesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    let delta = value / lastScale
+                                    lastScale = value
+                                    scale = min(max(scale * delta, 1), 4)
+                                }
+                                .onEnded { _ in
+                                    lastScale = 1.0
+                                    if scale < 1 {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                            scale = 1
+                                            offset = .zero
+                                        }
+                                    }
+                                },
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1 {
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                    if scale <= 1 {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                            offset = .zero
+                                        }
+                                    }
+                                }
+                        )
+                    )
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            if scale > 1 {
+                                scale = 1
+                                offset = .zero
+                                lastOffset = .zero
+                            } else {
+                                scale = 2
+                            }
+                        }
+                    }
+            } placeholder: {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .foregroundColor(.white)
+            }
+        }
+        .background(Color.black)
+    }
 }
