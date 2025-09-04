@@ -20,9 +20,9 @@ struct ReviewPost: Identifiable, Codable {
     let videos: [String]
     let likes: [String]
     let dislikes: [String]
-    let recommended: String
+    let recommended: String?
     let shares: [String]
-    let reviews: [String]
+    let reviews: [ReviewComment]?
     let user: ReviewUser
     let rating: Int
     let categoryType: String
@@ -36,16 +36,17 @@ struct ReviewPost: Identifiable, Codable {
     let likesCount: Int
     let dislikesCount: Int
     let sharesCount: Int
-    let likesDetails: [String]
-    let dislikesDetails: [String]
-    let sharesDetails: [String]
+    let likesDetails: [ReviewUser]?
+    let dislikesDetails: [ReviewUser]?
+    let sharesDetails: [String]?
+    let price: Int?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case title, description, imgs, videos, likes, dislikes, recommended
         case shares, reviews, user, rating, categoryType, category, subcategory
         case brand, product, slug, createdAt, updatedAt, likesCount, dislikesCount
-        case sharesCount, likesDetails, dislikesDetails, sharesDetails
+        case sharesCount, likesDetails, dislikesDetails, sharesDetails, price
     }
     
     var formattedCreatedDate: String {
@@ -84,9 +85,9 @@ struct ReviewUser: Codable {
     let firstName: String
     let lastName: String
     let email: String
-    let emailVerifiedId: String
+    let emailVerifiedId: String?
     let phoneNumber: String
-    let role: String
+    let role: String?
     let country: String
     let state: String?
     let userSlug: String?
@@ -95,7 +96,7 @@ struct ReviewUser: Codable {
     let applicationOnly: Bool?
     let auth2faBackup: [String]?
     let isDeleted: Bool?
-    let comment: [String]
+    let comment: [UserComment]
     let createdAt: String
     let updatedAt: String
     
@@ -109,8 +110,8 @@ struct ReviewUser: Codable {
 }
 
 struct ProductUserMetadata: Codable {
-    let dob: String
-    let username: String
+    let dob: String?
+    let username: String?
 }
 
 struct ReviewCategory: Codable {
@@ -164,6 +165,38 @@ struct ReviewPostPaginationInfo: Codable {
     let totalPages: Int
     let hasNextPage: Bool
     let hasPrevPage: Bool
+}
+
+// MARK: - User Comment Model
+
+struct UserComment: Codable {
+    let newAction: String
+    let oldAction: String
+    let comment: String
+    let updatedAt: String
+    let createdAt: String
+}
+
+// MARK: - Review Comment Model
+
+struct ReviewComment: Identifiable, Codable {
+    let id: String
+    let comment: String
+    let userId: String
+    let postId: String
+    let likesCount: Int
+    let dislikesCount: Int
+    let likes: [String]
+    let dislikes: [String]
+    let imgs: [String]
+    let createdAt: String
+    let updatedAt: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case comment, userId, postId, likesCount, dislikesCount
+        case likes, dislikes, imgs, createdAt, updatedAt
+    }
 }
 
 // MARK: - Product Detail Models

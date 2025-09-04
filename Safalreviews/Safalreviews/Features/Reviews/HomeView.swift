@@ -199,10 +199,10 @@ struct HomeView: View {
         ScrollView {
             LazyVStack(spacing: 8) {
                 ForEach(filteredProducts) { product in
-                    NavigationLink(destination: ProductDetailView(product: product)) {
+                 //   NavigationLink(destination: ProductDetailView(product: product)) {
                         ProductReviewCard(product: product)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+//                    }
+//                    .buttonStyle(PlainButtonStyle())
                     .task {
                         await reviewStore.loadMoreIfNeeded(currentItem: product)
                     }
