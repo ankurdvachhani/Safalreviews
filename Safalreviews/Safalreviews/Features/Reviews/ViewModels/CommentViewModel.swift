@@ -11,6 +11,7 @@ class CommentViewModel: ObservableObject {
     @Published var selectedImages: [UIImage] = []
     @Published var commentText = ""
     @Published var isAddingComment = false
+    var onCommentAdded: (() -> Void)?
     
     private let networkManager = NetworkManager()
     private var currentPage = 1
@@ -146,6 +147,9 @@ class CommentViewModel: ObservableObject {
                     // Clear form
                     commentText = ""
                     selectedImages = []
+                    
+                    // Call the callback to update parent view
+                    onCommentAdded?()
                     
                     // Refresh comments to get updated data
                     await refreshComments(for: postId)

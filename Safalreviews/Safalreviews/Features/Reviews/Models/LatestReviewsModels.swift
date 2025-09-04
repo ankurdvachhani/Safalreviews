@@ -22,7 +22,7 @@ struct Post: Identifiable, Codable {
     var dislikes: [String]
     let recommended: String
     let shares: [String]
-    let reviews: [Review]
+    var reviews: [Review]
     let user: PostUser
     let price: Int?
     let rating: Int
@@ -196,6 +196,22 @@ struct Review: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case userId, postId, comment, likes, dislikes, imgs, createdAt, updatedAt, likesCount, dislikesCount
+    }
+    
+    static var mockReview: Review {
+        Review(
+            id: "mock-review-id",
+            userId: "mock-user-id",
+            postId: "mock-post-id",
+            comment: "Mock comment",
+            likes: [],
+            dislikes: [],
+            imgs: [],
+            createdAt: "2024-01-01T00:00:00.000Z",
+            updatedAt: "2024-01-01T00:00:00.000Z",
+            likesCount: 0,
+            dislikesCount: 0
+        )
     }
 }
 

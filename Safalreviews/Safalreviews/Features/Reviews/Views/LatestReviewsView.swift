@@ -45,16 +45,24 @@ struct LatestReviewsView: View {
         }
         .sheet(isPresented: $showingCommentSheet) {
             if let post = selectedPostForComments {
-                CommentSheet(post: post)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
+                CommentSheet(
+                    post: post,
+                    onCommentAdded: {
+                        // Update the comment count for the selected post
+                        if let index = viewModel.posts.firstIndex(where: { $0.id == post.id }) {
+                            viewModel.posts[index].reviews.append(Review.mockReview)
+                        }
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
         }
     }
     
     // MARK: - Scroll Handling
     private func handleScrollOffset(_ offset: CGFloat) {
-        print("Scroll offset: \(offset)") // Debug print
+       // print("Scroll offset: \(offset)") // Debug print
         
         let scrollDelta = offset - lastScrollOffset
         lastScrollOffset = offset
@@ -62,13 +70,13 @@ struct LatestReviewsView: View {
         let threshold: CGFloat = 10
         
         if scrollDelta < -threshold && isHeaderVisible {
-            print("Hiding header - scrolling down") // Debug print
+        //    print("Hiding header - scrolling down") // Debug print
             // Scrolling down - hide header
             withAnimation(.easeInOut(duration: 0.3)) {
                 isHeaderVisible = false
             }
         } else if scrollDelta > threshold && !isHeaderVisible {
-            print("Showing header - scrolling up") // Debug print
+         //   print("Showing header - scrolling up") // Debug print
             // Scrolling up - show header
             withAnimation(.easeInOut(duration: 0.3)) {
                 isHeaderVisible = true

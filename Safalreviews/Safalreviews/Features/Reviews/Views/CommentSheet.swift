@@ -3,6 +3,7 @@ import PhotosUI
 
 struct CommentSheet: View {
     let post: Post
+    let onCommentAdded: (() -> Void)?
     @StateObject private var commentViewModel = CommentViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingImagePicker = false
@@ -29,6 +30,7 @@ struct CommentSheet: View {
         }
         .navigationViewStyle(StackNavigationViewStyle())
         .onAppear {
+            commentViewModel.onCommentAdded = onCommentAdded
             Task {
                 await commentViewModel.fetchComments(for: post.id)
             }
@@ -477,5 +479,5 @@ struct CommentCameraPicker: UIViewControllerRepresentable {
 }
 
 #Preview {
-    CommentSheet(post: Post.mockPost)
+    CommentSheet(post: Post.mockPost, onCommentAdded: nil)
 }
