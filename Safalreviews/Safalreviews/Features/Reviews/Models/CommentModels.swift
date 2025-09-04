@@ -93,7 +93,6 @@ struct PostCommentUser: Codable {
     let applicationOnly: Bool?
     let auth2faBackup: [String]?
     let isDeleted: Bool?
-    let comment: [String]
     let createdAt: String
     let updatedAt: String
     let profilePicture: String?
@@ -103,7 +102,7 @@ struct PostCommentUser: Codable {
         case id = "_id"
         case companySlug, applicationSlug, firstName, lastName, email, emailVerifiedId
         case phoneNumber, role, country, state, userSlug, metadata, status, applicationOnly
-        case auth2faBackup, isDeleted, comment, createdAt, updatedAt, profilePicture, isDelete
+        case auth2faBackup, isDeleted, createdAt, updatedAt, profilePicture, isDelete
     }
     
     var fullName: String {

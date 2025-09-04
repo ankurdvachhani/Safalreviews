@@ -6,6 +6,8 @@ struct CommentSheet: View {
     @StateObject private var commentViewModel = CommentViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingImagePicker = false
+    @State private var showingCamera = false
+    @State private var showingImageSourceSheet = false
     @State private var showingFullScreenMedia = false
     @State private var selectedMediaURLs: [String] = []
     @State private var selectedMediaIndex = 0
@@ -33,6 +35,24 @@ struct CommentSheet: View {
         }
         .sheet(isPresented: $showingImagePicker) {
             CommentImagePicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+        }
+        .sheet(isPresented: $showingCamera) {
+            CommentCameraPicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+        }
+        .actionSheet(isPresented: $showingImageSourceSheet) {
+            ActionSheet(
+                title: Text("Add Image"),
+                message: Text("Choose how you want to add an image"),
+                buttons: [
+                    .default(Text("Camera")) {
+                        showingCamera = true
+                    },
+                    .default(Text("Photo Library")) {
+                        showingImagePicker = true
+                    },
+                    .cancel()
+                ]
+            )
         }
         .fullScreenCover(isPresented: $showingFullScreenMedia) {
             FullScreenMediaView(
@@ -136,7 +156,7 @@ struct CommentSheet: View {
                 HStack(alignment: .center, spacing: 12) {
                     // Image picker button
                     Button(action: {
-                        showingImagePicker = true
+                        showingImageSourceSheet = true
                     }) {
                         Image(systemName: "photo")
                             .font(.title2)
@@ -408,6 +428,50 @@ struct CommentImagePicker: UIViewControllerRepresentable {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Comment Camera Picker
+struct CommentCameraPicker: UIViewControllerRepresentable {
+    @Binding var selectedImages: [UIImage]
+    let maxImages: Int
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .camera
+        picker.allowsEditing = false
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CommentCameraPicker
+        
+        init(_ parent: CommentCameraPicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                DispatchQueue.main.async {
+                    if self.parent.selectedImages.count < self.parent.maxImages {
+                        self.parent.selectedImages.append(image)
+                    }
+                }
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
