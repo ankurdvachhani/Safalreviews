@@ -1003,6 +1003,11 @@ struct AddCommentView: View {
         VStack(spacing: 0) {
             Divider()
             
+            // Selected images preview
+            if !commentViewModel.selectedImages.isEmpty {
+                selectedImagesPreview
+            }
+            
             HStack(alignment: .center, spacing: 12) {
                 // Image picker button
                 Button(action: {
@@ -1061,6 +1066,36 @@ struct AddCommentView: View {
             .background(Color(.systemBackground))
         }
         .ignoresSafeArea(.keyboard, edges: .bottom) // ✅ removes bottom gap
+    }
+    
+    // MARK: - Selected Images Preview
+    private var selectedImagesPreview: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(commentViewModel.selectedImages.enumerated()), id: \.offset) { index, image in
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        
+                        Button(action: {
+                            commentViewModel.removeImage(at: index)
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white)
+                                .background(Color.black.opacity(0.6))
+                                .clipShape(Circle())
+                        }
+                        .offset(x: 4, y: -4)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
     }
 }
 
