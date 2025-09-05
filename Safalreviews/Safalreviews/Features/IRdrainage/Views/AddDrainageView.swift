@@ -1034,21 +1034,21 @@ struct AddDrainageView: View {
                     )
                 }
                 .sheet(isPresented: $isBeforeCameraPresented) {
-                    ImagePicker(sourceType: .camera) { image in
+                    DrainageImagePicker(sourceType: .camera) { image in
                         if let image = image {
                             beforeImages.append((image: image, url: nil))
                         }
                     }
                 }
                 .sheet(isPresented: $isAfterCameraPresented) {
-                    ImagePicker(sourceType: .camera) { image in
+                    DrainageImagePicker(sourceType: .camera) { image in
                         if let image = image {
                             afterImages.append((image: image, url: nil))
                         }
                     }
                 }
                 .sheet(isPresented: $isFluidCupCameraPresented) {
-                    ImagePicker(sourceType: .camera) { image in
+                    DrainageImagePicker(sourceType: .camera) { image in
                         if let image = image {
                             fluidCupImages.append((image: image, url: nil))
                         }
@@ -1257,7 +1257,7 @@ struct AddDrainageView: View {
 }
 
 
-struct ImagePicker: UIViewControllerRepresentable {
+struct DrainageImagePicker: UIViewControllerRepresentable {
     var sourceType: UIImagePickerController.SourceType = .photoLibrary
     var completion: (UIImage?) -> Void
 
@@ -1275,8 +1275,8 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: ImagePicker
-        init(_ parent: ImagePicker) { self.parent = parent }
+        let parent: DrainageImagePicker
+        init(_ parent: DrainageImagePicker) { self.parent = parent }
 
         func imagePickerController(_ picker: UIImagePickerController,
                                    didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {

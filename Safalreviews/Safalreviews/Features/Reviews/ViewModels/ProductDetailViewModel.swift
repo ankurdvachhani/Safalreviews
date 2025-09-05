@@ -160,6 +160,138 @@ class ProductDetailViewModel: ObservableObject {
         
         return breakdown
     }
+    
+    // MARK: - Like/Dislike Methods
+    func likeReview(_ review: ReviewPost) async {
+        print("👍 Liking review: \(review.id)")
+        
+        do {
+            let endpoint = Endpoint(
+                path: "/api/post/\(review.id)/like",
+                method: .post
+            )
+            
+            let response: ReviewPostLikeResponse = try await networkManager.fetch(endpoint)
+            
+            if response.success {
+                // Update the review in the local array with new like data
+                await updateReviewWithLikeData(response.data)
+                print("✅ Review liked successfully")
+            } else {
+                errorMessage = "Failed to like review"
+                print("❌ Failed to like review: \(response.message)")
+            }
+            
+        } catch {
+            print("❌ Error liking review: \(error)")
+            errorMessage = "Failed to like review: \(error.localizedDescription)"
+        }
+    }
+    
+    func dislikeReview(_ review: ReviewPost) async {
+        print("👎 Disliking review: \(review.id)")
+        
+        do {
+            let endpoint = Endpoint(
+                path: "/api/post/\(review.id)/dislike",
+                method: .post
+            )
+            
+            let response: ReviewPostDislikeResponse = try await networkManager.fetch(endpoint)
+            
+            if response.success {
+                // Update the review in the local array with new dislike data
+                await updateReviewWithDislikeData(response.data)
+                print("✅ Review disliked successfully")
+            } else {
+                errorMessage = "Failed to dislike review"
+                print("❌ Failed to dislike review: \(response.message)")
+            }
+            
+        } catch {
+            print("❌ Error disliking review: \(error)")
+            errorMessage = "Failed to dislike review: \(error.localizedDescription)"
+        }
+    }
+    
+    // MARK: - Private Helper Methods
+    @MainActor
+    private func updateReviewWithLikeData(_ likeData: ReviewPostLikeData) {
+        if let index = reviews.firstIndex(where: { $0.id == likeData.id }) {
+            // Update the review with new like data
+            reviews[index].likes = likeData.likes
+            reviews[index].dislikes = likeData.dislikes
+            reviews[index].likesCount = likeData.likesCount
+            reviews[index].dislikesCount = likeData.dislikesCount
+            
+            // Also update in productDetail if it exists
+            if var detail = productDetail {
+                let updatedReviews = detail.reviews
+                if let reviewIndex = updatedReviews.firstIndex(where: { $0.id == likeData.id }) {
+                    var newReviews = updatedReviews
+                    newReviews[reviewIndex].likes = likeData.likes
+                    newReviews[reviewIndex].dislikes = likeData.dislikes
+                    newReviews[reviewIndex].likesCount = likeData.likesCount
+                    newReviews[reviewIndex].dislikesCount = likeData.dislikesCount
+                    
+                    productDetail = ProductDetail(
+                        id: detail.id,
+                        name: detail.name,
+                        description: detail.description,
+                        displayImage: detail.displayImage,
+                        category: detail.category,
+                        subcategory: detail.subcategory,
+                        brand: detail.brand,
+                        averageRating: detail.averageRating,
+                        totalRatings: detail.totalRatings,
+                        ratingBreakdown: detail.ratingBreakdown,
+                        reviews: newReviews
+                    )
+                }
+            }
+            
+            print("📊 Updated like count: \(likeData.likesCount), dislike count: \(likeData.dislikesCount)")
+        }
+    }
+    
+    @MainActor
+    private func updateReviewWithDislikeData(_ dislikeData: ReviewPostDislikeData) {
+        if let index = reviews.firstIndex(where: { $0.id == dislikeData.id }) {
+            // Update the review with new dislike data
+            reviews[index].likes = dislikeData.likes
+            reviews[index].dislikes = dislikeData.dislikes
+            reviews[index].likesCount = dislikeData.likesCount
+            reviews[index].dislikesCount = dislikeData.dislikesCount
+            
+            // Also update in productDetail if it exists
+            if var detail = productDetail {
+                let updatedReviews = detail.reviews
+                if let reviewIndex = updatedReviews.firstIndex(where: { $0.id == dislikeData.id }) {
+                    var newReviews = updatedReviews
+                    newReviews[reviewIndex].likes = dislikeData.likes
+                    newReviews[reviewIndex].dislikes = dislikeData.dislikes
+                    newReviews[reviewIndex].likesCount = dislikeData.likesCount
+                    newReviews[reviewIndex].dislikesCount = dislikeData.dislikesCount
+                    
+                    productDetail = ProductDetail(
+                        id: detail.id,
+                        name: detail.name,
+                        description: detail.description,
+                        displayImage: detail.displayImage,
+                        category: detail.category,
+                        subcategory: detail.subcategory,
+                        brand: detail.brand,
+                        averageRating: detail.averageRating,
+                        totalRatings: detail.totalRatings,
+                        ratingBreakdown: detail.ratingBreakdown,
+                        reviews: newReviews
+                    )
+                }
+            }
+            
+            print("📊 Updated like count: \(dislikeData.likesCount), dislike count: \(dislikeData.dislikesCount)")
+        }
+    }
 }
 
 // MARK: - Endpoint Extension

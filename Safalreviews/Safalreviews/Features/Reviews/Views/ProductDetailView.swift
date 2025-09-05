@@ -7,6 +7,8 @@ struct ProductDetailView: View {
     @State private var showingWriteReview = false
     @State private var currentImageIndex = 0
     @State private var timer: Timer?
+    @State private var showingCommentSheet = false
+    @State private var selectedReviewForComments: ReviewPost?
     
     var body: some View {
             ZStack {
@@ -35,6 +37,23 @@ struct ProductDetailView: View {
             .toast(message: $viewModel.successMessage, type: .success)
             .sheet(isPresented: $showingWriteReview) {
                 WriteReviewView(product: product)
+            }
+            .sheet(isPresented: $showingCommentSheet) {
+                if let review = selectedReviewForComments {
+                    ReviewCommentSheet(
+                        review: review,
+                        onCommentAdded: {
+                            // Update the comment count for the selected review
+                            if let index = viewModel.reviews.firstIndex(where: { $0.id == review.id }) {
+                                // Add a mock comment to show the update
+                                // In a real app, you'd reload the review data
+                                print("Comment added to review: \(review.id)")
+                            }
+                        }
+                    )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
             }
         .task {
             await viewModel.loadProductDetail(productId: product.id)
@@ -328,12 +347,19 @@ struct ProductDetailView: View {
             } else {
                 LazyVStack(spacing: 24) {
                     ForEach(productDetail.reviews) { review in
-                        ReviewCardView(review: review)
-                            .task {
-                                if review.id == productDetail.reviews.last?.id {
-                                    await viewModel.loadMoreReviews(productId: product.id)
-                                }
+                        ReviewCardView(
+                            review: review, 
+                            viewModel: viewModel,
+                            onCommentTap: { selectedReview in
+                                selectedReviewForComments = selectedReview
+                                showingCommentSheet = true
                             }
+                        )
+                        .task {
+                            if review.id == productDetail.reviews.last?.id {
+                                await viewModel.loadMoreReviews(productId: product.id)
+                            }
+                        }
                     }
                     
                     if viewModel.isLoading {
@@ -460,7 +486,8 @@ struct ProductDetailView: View {
 // MARK: - Review Card View
 struct ReviewCardView: View {
     let review: ReviewPost
-    @State private var showingComments = false
+    let viewModel: ProductDetailViewModel
+    let onCommentTap: (ReviewPost) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -521,36 +548,74 @@ struct ReviewCardView: View {
                     .foregroundColor(.secondary)
             }
             
-            // Engagement
-            HStack(spacing: 20) {
-                Button {
-                    // Handle like
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "hand.thumbsup")
-                            .font(.system(size: 16))
-                        Text("\(review.likesCount)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
+            // Engagement metrics
+            HStack {
+                Text("👍 \(review.likesCount) Likes")
+                    .font(.caption)
                     .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text("\(review.reviews?.count ?? 0) comments")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Divider()
+                .background(Color(.systemGray4))
+            
+            // Interaction buttons
+            HStack {
+                // Like Button
+                Button(action: {
+                    Task {
+                        await viewModel.likeReview(review)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: review.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup")
+                            .font(.system(size: 16))
+                        Text("Like")
+                            .font(.subheadline)
+                    }
+                    .foregroundColor(review.isLiked ? .blue : .secondary)
                 }
                 
-                Button {
-                    showingComments.toggle()
-                } label: {
-                    HStack(spacing: 6) {
+                Spacer()
+                
+                // Dislike Button
+                Button(action: {
+                    Task {
+                        await viewModel.dislikeReview(review)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: review.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                            .font(.system(size: 16))
+                        Text("Dislike")
+                            .font(.subheadline)
+                    }
+                    .foregroundColor(review.isDisliked ? .red : .secondary)
+                }
+                
+                Spacer()
+                
+                // Comment Button
+                Button(action: {
+                    onCommentTap(review)
+                }) {
+                    HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
                             .font(.system(size: 16))
-                        Text("0 comments")
+                        Text("Comment")
                             .font(.subheadline)
-                            .fontWeight(.medium)
-                        Image(systemName: showingComments ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 12))
                     }
                     .foregroundColor(.secondary)
                 }
             }
+            
+            Divider()
+                .background(Color(.systemGray4))
             
             // Safal Tag
             HStack {
@@ -682,6 +747,339 @@ struct WriteReviewView: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Review Comment Sheet
+struct ReviewCommentSheet: View {
+    let review: ReviewPost
+    let onCommentAdded: () -> Void
+    @StateObject private var commentViewModel = CommentViewModel()
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                // Review header
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(review.title)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text(review.cleanDescription)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(3)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color(.systemGray6))
+                
+                // Comments list
+                if commentViewModel.isLoading && commentViewModel.comments.isEmpty {
+                    VStack {
+                        ProgressView()
+                            .scaleEffect(1.2)
+                        Text("Loading comments...")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if commentViewModel.comments.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "bubble.left")
+                            .font(.system(size: 40))
+                            .foregroundColor(.secondary)
+                        
+                        Text("No comments yet")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text("Be the first to comment on this review!")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 16) {
+                            ForEach(commentViewModel.comments) { comment in
+                                CommentCardView(comment: comment, viewModel: commentViewModel)
+                            }
+                            
+                            if commentViewModel.isLoading {
+                                HStack {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text("Loading more comments...")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        .padding()
+                    }
+                }
+                
+                // Add comment section
+                AddCommentView(
+                    postId: review.id,
+                    onCommentAdded: {
+                        onCommentAdded()
+                    }
+                )
+            }
+            .navigationTitle("Comments")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .toast(message: $commentViewModel.errorMessage, type: .error)
+            .toast(message: $commentViewModel.successMessage, type: .success)
+        }
+        .task {
+            // Load comments when view appears
+        }
+    }
+}
+
+// MARK: - Comment Card View
+struct CommentCardView: View {
+    let comment: PostComment
+    let viewModel: CommentViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // User info
+            HStack(spacing: 8) {
+                AsyncImage(url: URL(string: comment.user.profilePicture ?? "")) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Image(systemName: "person.circle.fill")
+                        .foregroundColor(.gray)
+                }
+                .frame(width: 32, height: 32)
+                .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(comment.user.displayName)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    Text(comment.formattedCreatedDate)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            // Comment text
+            Text(comment.comment)
+                .font(.body)
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.leading)
+            
+            // Comment images
+            if !comment.imgs.isEmpty {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                    ForEach(comment.imgs, id: \.self) { imageUrl in
+                        AsyncImage(url: URL(string: imageUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color(.systemGray5))
+                                .overlay(
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                )
+                        }
+                        .frame(height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+            
+            // Like/Dislike buttons
+            HStack(spacing: 20) {
+                Button(action: {
+                    Task {
+                        await viewModel.likeComment(comment)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: comment.isLiked ? "hand.thumbsup.fill" : "hand.thumbsup")
+                            .font(.system(size: 14))
+                        Text("\(comment.likesCount)")
+                            .font(.caption)
+                    }
+                    .foregroundColor(comment.isLiked ? .blue : .secondary)
+                }
+                
+                Button(action: {
+                    Task {
+                        await viewModel.dislikeComment(comment)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: comment.isDisliked ? "hand.thumbsdown.fill" : "hand.thumbsdown")
+                            .font(.system(size: 14))
+                        Text("\(comment.dislikesCount)")
+                            .font(.caption)
+                    }
+                    .foregroundColor(comment.isDisliked ? .red : .secondary)
+                }
+                
+                Spacer()
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+}
+
+// MARK: - Add Comment View
+struct AddCommentView: View {
+    let postId: String
+    let onCommentAdded: () -> Void
+    @StateObject private var commentViewModel = CommentViewModel()
+    @State private var commentText = ""
+    @State private var selectedImages: [UIImage] = []
+    @State private var showingImagePicker = false
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Image preview
+            if !selectedImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                
+                                Button(action: {
+                                    selectedImages.remove(at: index)
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.white)
+                                        .background(Color.black.opacity(0.6))
+                                        .clipShape(Circle())
+                                        .font(.system(size: 16))
+                                }
+                                .offset(x: 8, y: -8)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            
+            // Comment input
+            HStack(spacing: 12) {
+                TextField("Add a comment...", text: $commentText, axis: .vertical)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(.systemGray6))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .lineLimit(1...4)
+                
+                Button(action: {
+                    showingImagePicker = true
+                }) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 18))
+                        .foregroundColor(.secondary)
+                }
+                
+                Button(action: {
+                    Task {
+                        await addComment()
+                    }
+                }) {
+                    Image(systemName: "paperplane.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(commentText.isEmpty ? .secondary : Color.dynamicAccent)
+                }
+                .disabled(commentText.isEmpty)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+        .background(Color(.systemBackground))
+        .sheet(isPresented: $showingImagePicker) {
+            ProductDetailImagePicker(selectedImages: $selectedImages)
+        }
+        .toast(message: $commentViewModel.errorMessage, type: .error)
+        .toast(message: $commentViewModel.successMessage, type: .success)
+    }
+    
+    private func addComment() async {
+        await commentViewModel.addComment(to: postId)
+        
+        if commentViewModel.successMessage != nil {
+            commentText = ""
+            selectedImages = []
+            onCommentAdded()
+        }
+    }
+}
+
+// MARK: - Product Detail Image Picker
+struct ProductDetailImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImages: [UIImage]
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        picker.allowsEditing = false
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ProductDetailImagePicker
+        
+        init(_ parent: ProductDetailImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.selectedImages.append(image)
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }

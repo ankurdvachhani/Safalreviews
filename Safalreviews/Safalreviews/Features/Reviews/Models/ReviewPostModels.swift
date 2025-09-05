@@ -18,8 +18,8 @@ struct ReviewPost: Identifiable, Codable {
     let description: String
     let imgs: [String]
     let videos: [String]
-    let likes: [String]
-    let dislikes: [String]
+    var likes: [String]
+    var dislikes: [String]
     let recommended: String?
     let shares: [String]
     let reviews: [ReviewComment]?
@@ -33,8 +33,8 @@ struct ReviewPost: Identifiable, Codable {
     let slug: String
     let createdAt: String
     let updatedAt: String
-    let likesCount: Int
-    let dislikesCount: Int
+    var likesCount: Int
+    var dislikesCount: Int
     let sharesCount: Int
     let likesDetails: [ReviewUser]?
     let dislikesDetails: [ReviewUser]?
@@ -75,6 +75,16 @@ struct ReviewPost: Identifiable, Codable {
         let firstName = user.firstName.isEmpty ? "" : user.firstName
         let lastName = user.lastName.isEmpty ? "" : user.lastName
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+    }
+    
+    var isLiked: Bool {
+        guard let currentUserId = TokenManager.shared.getUserId() else { return false }
+        return likes.contains(currentUserId)
+    }
+    
+    var isDisliked: Bool {
+        guard let currentUserId = TokenManager.shared.getUserId() else { return false }
+        return dislikes.contains(currentUserId)
     }
 }
 
@@ -230,5 +240,91 @@ struct ProductDetail: Identifiable, Codable {
     
     var isRated: Bool {
         return totalRatings > 0
+    }
+}
+
+// MARK: - Review Post Like/Dislike Response Models
+
+struct ReviewPostLikeResponse: Codable {
+    let success: Bool
+    let data: ReviewPostLikeData
+    let errors: [String]
+    let timestamp: String
+    let message: String
+}
+
+struct ReviewPostDislikeResponse: Codable {
+    let success: Bool
+    let data: ReviewPostDislikeData
+    let errors: [String]
+    let timestamp: String
+    let message: String
+}
+
+struct ReviewPostLikeData: Codable {
+    let id: String
+    let title: String
+    let description: String
+    let imgs: [String]
+    let videos: [String]
+    let likes: [String]
+    let dislikes: [String]
+    let recommended: String?
+    let shares: [String]
+    let reviews: [String]
+    let user: String
+    let price: Int?
+    let rating: Int
+    let categoryType: String
+    let category: String?
+    let subcategory: String?
+    let brand: String?
+    let product: String?
+    let slug: String
+    let createdAt: String
+    let updatedAt: String
+    let likesCount: Int
+    let dislikesCount: Int
+    let sharesCount: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case title, description, imgs, videos, likes, dislikes, recommended, shares, reviews, user
+        case price, rating, categoryType, category, subcategory, brand, product
+        case slug, createdAt, updatedAt, likesCount, dislikesCount, sharesCount
+    }
+}
+
+struct ReviewPostDislikeData: Codable {
+    let id: String
+    let title: String
+    let description: String
+    let imgs: [String]
+    let videos: [String]
+    let likes: [String]
+    let dislikes: [String]
+    let recommended: String?
+    let shares: [String]
+    let reviews: [String]
+    let user: String
+    let price: Int?
+    let rating: Int
+    let categoryType: String
+    let category: String?
+    let subcategory: String?
+    let brand: String?
+    let product: String?
+    let slug: String
+    let createdAt: String
+    let updatedAt: String
+    let likesCount: Int
+    let dislikesCount: Int
+    let sharesCount: Int
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case title, description, imgs, videos, likes, dislikes, recommended, shares, reviews, user
+        case price, rating, categoryType, category, subcategory, brand, product
+        case slug, createdAt, updatedAt, likesCount, dislikesCount, sharesCount
     }
 }
