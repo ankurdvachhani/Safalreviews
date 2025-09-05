@@ -34,7 +34,7 @@ class ProductDetailViewModel: ObservableObject {
                     id: firstReview.product.id,
                     name: firstReview.product.name,
                     description: "This is \(firstReview.product.name.lowercased())",
-                    displayImage: nil, // You might want to add this to your product model
+                    displayImage: firstReview.imgs.first, // Use first review image as display image
                     category: firstReview.category.name,
                     subcategory: firstReview.subcategory.name,
                     brand: firstReview.brand.name,
@@ -43,6 +43,9 @@ class ProductDetailViewModel: ObservableObject {
                     ratingBreakdown: ratingBreakdown,
                     reviews: reviews
                 )
+            } else {
+                // If no reviews found, set productDetail to nil to show "not reviewed" state
+                productDetail = nil
             }
             
             self.reviews = reviews
@@ -51,6 +54,8 @@ class ProductDetailViewModel: ObservableObject {
             
         } catch {
             errorMessage = error.localizedDescription
+            // Set productDetail to nil on error to show appropriate UI
+            productDetail = nil
         }
         
         isLoading = false
@@ -125,6 +130,35 @@ class ProductDetailViewModel: ObservableObject {
         currentPage = 1
         hasMorePages = true
         await loadProductDetail(productId: productId)
+    }
+    
+    /// Creates a ProductDetail from ProductReview data when no reviews are found
+    func createProductDetailFromProduct(_ product: ProductReview) {
+        productDetail = ProductDetail(
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            displayImage: product.mediaSignedUrls.first ?? product.media.first,
+            category: product.brand.subCategory.category.name,
+            subcategory: product.brand.subCategory.name,
+            brand: product.brand.name,
+            averageRating: product.averageRating,
+            totalRatings: product.totalRatings,
+            ratingBreakdown: createRatingBreakdown(from: product.ratings),
+            reviews: []
+        )
+    }
+    
+    private func createRatingBreakdown(from ratings: [Int]) -> [Int: Int] {
+        var breakdown: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0]
+        
+        for rating in ratings {
+            if rating >= 1 && rating <= 5 {
+                breakdown[rating, default: 0] += 1
+            }
+        }
+        
+        return breakdown
     }
 }
 

@@ -5,6 +5,8 @@ struct ProductDetailView: View {
     @StateObject private var viewModel = ProductDetailViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingWriteReview = false
+    @State private var currentImageIndex = 0
+    @State private var timer: Timer?
     
     var body: some View {
             ZStack {
@@ -36,6 +38,17 @@ struct ProductDetailView: View {
             }
         .task {
             await viewModel.loadProductDetail(productId: product.id)
+            
+            // If no product detail was loaded (no reviews found), create one from the original product data
+            if viewModel.productDetail == nil {
+                viewModel.createProductDetailFromProduct(product)
+            }
+        }
+        .onAppear {
+            startImageCarousel()
+        }
+        .onDisappear {
+            stopImageCarousel()
         }
     }
     
@@ -63,7 +76,37 @@ struct ProductDetailView: View {
     // MARK: - Product Image View
     private func productImageView(_ productDetail: ProductDetail) -> some View {
         ZStack(alignment: .topTrailing) {
-            if let imageUrl = productDetail.displayImage {
+            // Get all available images
+            let allImages = product.mediaSignedUrls.isEmpty ? 
+                (product.media.isEmpty ? [productDetail.displayImage].compactMap { $0 } : product.media) : 
+                product.mediaSignedUrls
+            
+            if allImages.count > 1 {
+                // Multiple images - show carousel
+                TabView(selection: $currentImageIndex) {
+                    ForEach(0..<allImages.count, id: \.self) { index in
+                        AsyncImage(url: URL(string: allImages[index])) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color(.systemGray5))
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 60))
+                                        .foregroundColor(.secondary)
+                                )
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+                        .clipped()
+                        .tag(index)
+                    }
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+            } else if let imageUrl = allImages.first {
+                // Single image
                 AsyncImage(url: URL(string: imageUrl)) { image in
                     image
                         .resizable()
@@ -77,14 +120,13 @@ struct ProductDetailView: View {
                                 .foregroundColor(.secondary)
                         )
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 280)
+                .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
                 .clipped()
             } else {
+                // No image
                 Rectangle()
                     .fill(Color(.systemGray5))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 280)
+                    .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
                     .overlay(
                         Image(systemName: "photo")
                             .font(.system(size: 60))
@@ -92,18 +134,20 @@ struct ProductDetailView: View {
                     )
             }
             
-            // Image carousel indicators
-            HStack(spacing: 6) {
-                ForEach(0..<3, id: \.self) { index in
-                    Circle()
-                        .fill(index == 0 ? Color.white : Color.white.opacity(0.5))
-                        .frame(width: 6, height: 6)
+            // Image carousel indicators (only show if multiple images)
+            if allImages.count > 1 {
+                HStack(spacing: 6) {
+                    ForEach(0..<allImages.count, id: \.self) { index in
+                        Circle()
+                            .fill(index == currentImageIndex ? Color.white : Color.white.opacity(0.5))
+                            .frame(width: 6, height: 6)
+                    }
                 }
+                .padding(6)
+                .background(Color.black.opacity(0.4))
+                .clipShape(Capsule())
+                .offset(x: -8, y: 8)
             }
-            .padding(6)
-            .background(Color.black.opacity(0.4))
-            .clipShape(Capsule())
-            .offset(x: -8, y: 8)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
@@ -278,49 +322,95 @@ struct ProductDetailView: View {
             }
             .padding(.horizontal, 20)
             
-            // Reviews List
-            LazyVStack(spacing: 24) {
-                ForEach(productDetail.reviews) { review in
-                    ReviewCardView(review: review)
-                        .task {
-                            if review.id == productDetail.reviews.last?.id {
-                                await viewModel.loadMoreReviews(productId: product.id)
+            // Reviews List or No Reviews State
+            if productDetail.reviews.isEmpty {
+                noReviewsState
+            } else {
+                LazyVStack(spacing: 24) {
+                    ForEach(productDetail.reviews) { review in
+                        ReviewCardView(review: review)
+                            .task {
+                                if review.id == productDetail.reviews.last?.id {
+                                    await viewModel.loadMoreReviews(productId: product.id)
+                                }
                             }
+                    }
+                    
+                    if viewModel.isLoading {
+                        HStack {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Loading more reviews...")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                    }
                 }
+                .padding(.horizontal, 20)
                 
-                if viewModel.isLoading {
+                // End of reviews indicator
+                if !viewModel.isLoading && productDetail.reviews.count > 0 {
                     HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Loading more reviews...")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                        Spacer()
+                        VStack(spacing: 12) {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 24))
+                                .foregroundColor(.secondary)
+                            Text("You've seen all reviews!")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
+                    .padding(.vertical, 32)
                 }
-            }
-            .padding(.horizontal, 20)
-            
-            // End of reviews indicator
-            if !viewModel.isLoading && productDetail.reviews.count > 0 {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 24))
-                            .foregroundColor(.secondary)
-                        Text("You've seen all reviews!")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.secondary)
-                    }
-                    Spacer()
-                }
-                .padding(.vertical, 32)
             }
         }
+    }
+    
+    // MARK: - No Reviews State
+    private var noReviewsState: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "star.slash")
+                .font(.system(size: 60))
+                .foregroundColor(Color.dynamicAccent.opacity(0.6))
+            
+            VStack(spacing: 12) {
+                Text("No Reviews Yet")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.primary)
+                
+                Text("Be the first to review this product and help others make informed decisions!")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+            
+            Button {
+                showingWriteReview = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("Write First Review")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.dynamicAccent)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(color: Color.dynamicAccent.opacity(0.3), radius: 8, x: 0, y: 4)
+            }
+            .padding(.horizontal, 20)
+        }
+        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Empty State
@@ -344,6 +434,26 @@ struct ProductDetailView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+    }
+    
+    // MARK: - Image Carousel Methods
+    private func startImageCarousel() {
+        let allImages = product.mediaSignedUrls.isEmpty ? 
+            (product.media.isEmpty ? [] : product.media) : 
+            product.mediaSignedUrls
+        
+        guard allImages.count > 1 else { return }
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.5)) {
+                currentImageIndex = (currentImageIndex + 1) % allImages.count
+            }
+        }
+    }
+    
+    private func stopImageCarousel() {
+        timer?.invalidate()
+        timer = nil
     }
 }
 
