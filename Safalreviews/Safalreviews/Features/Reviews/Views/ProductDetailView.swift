@@ -761,20 +761,22 @@ struct ReviewCommentSheet: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Review header
-                VStack(alignment: .leading, spacing: 12) {
+                // Review header - compact version
+                VStack(alignment: .leading, spacing: 6) {
                     Text(review.title)
-                        .font(.headline)
-                        .fontWeight(.bold)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundColor(.primary)
+                        .lineLimit(1)
                     
                     Text(review.cleanDescription)
-                        .font(.subheadline)
+                        .font(.caption)
                         .foregroundColor(.secondary)
-                        .lineLimit(3)
+                        .lineLimit(2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
                 .background(Color(.systemGray6))
                 
                 // Comments list
@@ -805,7 +807,7 @@ struct ReviewCommentSheet: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        LazyVStack(spacing: 16) {
+                        LazyVStack(spacing: 12) {
                             ForEach(commentViewModel.comments) { comment in
                                 CommentCardView(comment: comment, viewModel: commentViewModel)
                             }
@@ -819,10 +821,11 @@ struct ReviewCommentSheet: View {
                                         .foregroundColor(.secondary)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
+                                .padding(.vertical, 4)
                             }
                         }
-                        .padding()
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
                 }
                 
@@ -831,6 +834,10 @@ struct ReviewCommentSheet: View {
                     postId: review.id,
                     onCommentAdded: {
                         onCommentAdded()
+                        // Refresh comments after adding
+                        Task {
+                            await commentViewModel.refreshComments(for: review.id)
+                        }
                     }
                 )
             }
@@ -847,7 +854,7 @@ struct ReviewCommentSheet: View {
             .toast(message: $commentViewModel.successMessage, type: .success)
         }
         .task {
-            // Load comments when view appears
+            await commentViewModel.fetchComments(for: review.id)
         }
     }
 }
@@ -858,7 +865,7 @@ struct CommentCardView: View {
     let viewModel: CommentViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             // User info
             HStack(spacing: 8) {
                 AsyncImage(url: URL(string: comment.user.profilePicture ?? "")) { image in
@@ -947,10 +954,11 @@ struct CommentCardView: View {
                 Spacer()
             }
         }
-        .padding()
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(0.03), radius: 2, x: 0, y: 1)
     }
 }
 
@@ -964,18 +972,18 @@ struct AddCommentView: View {
     @State private var showingImagePicker = false
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Image preview
+        VStack(spacing: 0) {
+            // Image preview - compact version
             if !selectedImages.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
                             ZStack(alignment: .topTrailing) {
                                 Image(uiImage: image)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .frame(width: 40, height: 40)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
                                 
                                 Button(action: {
                                     selectedImages.remove(at: index)
@@ -984,32 +992,35 @@ struct AddCommentView: View {
                                         .foregroundColor(.white)
                                         .background(Color.black.opacity(0.6))
                                         .clipShape(Circle())
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 12))
                                 }
-                                .offset(x: 8, y: -8)
+                                .offset(x: 4, y: -4)
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
                 }
+                .frame(height: 48)
             }
             
-            // Comment input
-            HStack(spacing: 12) {
+            // Comment input - compact version
+            HStack(spacing: 8) {
                 TextField("Add a comment...", text: $commentText, axis: .vertical)
                     .textFieldStyle(PlainTextFieldStyle())
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 6)
                     .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .lineLimit(1...4)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .lineLimit(1...3)
                 
                 Button(action: {
                     showingImagePicker = true
                 }) {
                     Image(systemName: "photo")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundColor(.secondary)
+                        .frame(width: 32, height: 32)
                 }
                 
                 Button(action: {
@@ -1018,13 +1029,15 @@ struct AddCommentView: View {
                     }
                 }) {
                     Image(systemName: "paperplane.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundColor(commentText.isEmpty ? .secondary : Color.dynamicAccent)
+                        .frame(width: 32, height: 32)
                 }
                 .disabled(commentText.isEmpty)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .padding(.bottom,8)
         }
         .background(Color(.systemBackground))
         .sheet(isPresented: $showingImagePicker) {
@@ -1035,6 +1048,10 @@ struct AddCommentView: View {
     }
     
     private func addComment() async {
+        // Set the comment text in the view model
+        commentViewModel.commentText = commentText
+        commentViewModel.selectedImages = selectedImages
+        
         await commentViewModel.addComment(to: postId)
         
         if commentViewModel.successMessage != nil {
