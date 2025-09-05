@@ -780,56 +780,58 @@ struct ReviewCommentSheet: View {
                 .padding(.vertical, 8)
                 .background(Color(.systemGray6))
                 
-                // Comments list
-                if commentViewModel.isLoading && commentViewModel.comments.isEmpty {
-                    VStack {
-                        ProgressView()
-                            .scaleEffect(1.2)
-                        Text("Loading comments...")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if commentViewModel.comments.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "bubble.left")
-                            .font(.system(size: 40))
-                            .foregroundColor(.secondary)
-                        
-                        Text("No comments yet")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                        
-                        Text("Be the first to comment on this review!")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(commentViewModel.comments) { comment in
-                                CommentCardView(comment: comment, viewModel: commentViewModel)
-                            }
-                            
-                            if commentViewModel.isLoading {
-                                HStack {
-                                    ProgressView()
-                                        .scaleEffect(0.8)
-                                    Text("Loading more comments...")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 4)
-                            }
+                // Comments list - this should take up remaining space
+                Group {
+                    if commentViewModel.isLoading && commentViewModel.comments.isEmpty {
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(1.2)
+                            Text("Loading comments...")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if commentViewModel.comments.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "bubble.left")
+                                .font(.system(size: 40))
+                                .foregroundColor(.secondary)
+                            
+                            Text("No comments yet")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Text("Be the first to comment on this review!")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 12) {
+                                ForEach(commentViewModel.comments) { comment in
+                                    CommentCardView(comment: comment, viewModel: commentViewModel)
+                                }
+                                
+                                if commentViewModel.isLoading {
+                                    HStack {
+                                        ProgressView()
+                                            .scaleEffect(0.8)
+                                        Text("Loading more comments...")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
                 // Add comment section
                 AddCommentView(
@@ -970,65 +972,34 @@ struct AddCommentView: View {
     let onCommentAdded: () -> Void
     @StateObject private var commentViewModel = CommentViewModel()
     @State private var showingImagePicker = false
+    @State private var showingCamera = false
     @State private var showingImageSourceSheet = false
     
     var body: some View {
         VStack(spacing: 0) {
             Divider()
             
-            // Image preview - compact version using CommentViewModel
-            if !commentViewModel.selectedImages.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(Array(commentViewModel.selectedImages.enumerated()), id: \.offset) { index, image in
-                            ZStack(alignment: .topTrailing) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 40, height: 40)
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                                
-                                Button(action: {
-                                    commentViewModel.removeImage(at: index)
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.white)
-                                        .background(Color.black.opacity(0.6))
-                                        .clipShape(Circle())
-                                }
-                                .offset(x: 4, y: -4)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                }
-                .frame(height: 48)
-            }
-            Spacer()
-            // Comment input - compact version with proper validation
-            HStack(alignment: .center, spacing: 8) {
-                // Image picker button with validation
+            HStack(alignment: .center, spacing: 12) {
+                // Image picker button
                 Button(action: {
                     showingImageSourceSheet = true
                 }) {
                     Image(systemName: "photo")
-                        .font(.system(size: 16))
+                        .font(.title2)
                         .foregroundColor(.blue)
                 }
                 .disabled(commentViewModel.selectedImages.count >= 4)
                 
-                // Text input using CommentViewModel
+                // Text input
                 TextField("Add a comment...", text: $commentViewModel.commentText, axis: .vertical)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .lineLimit(1...3)
+                    .lineLimit(1...4)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.vertical, 8)
                     .background(Color(.systemGray6))
-                    .cornerRadius(16)
+                    .cornerRadius(20)
                 
-                // Send button with loading state and proper validation
+                // Send button
                 Button(action: {
                     Task {
                         await commentViewModel.addComment(to: postId)
@@ -1049,40 +1020,23 @@ struct AddCommentView: View {
                 }
                 .frame(width: 32, height: 32)
                 .background(
-                    commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && commentViewModel.selectedImages.isEmpty
+                    commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                    commentViewModel.selectedImages.isEmpty
                     ? Color.gray
                     : Color.blue
                 )
                 .clipShape(Circle())
-                .disabled(commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && commentViewModel.selectedImages.isEmpty || commentViewModel.isAddingComment)
+                .disabled(
+                    commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                    commentViewModel.selectedImages.isEmpty ||
+                    commentViewModel.isAddingComment
+                )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .background(Color(.systemBackground))
         }
-        .background(Color(.systemBackground))
-        .sheet(isPresented: $showingImagePicker) {
-            ProductDetailCommentImagePicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
-        }
-        .sheet(isPresented: $showingImageSourceSheet) {
-            ProductDetailCommentCameraPicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
-        }
-        .actionSheet(isPresented: $showingImageSourceSheet) {
-            ActionSheet(
-                title: Text("Add Image"),
-                message: Text("Choose how you want to add an image"),
-                buttons: [
-                    .default(Text("Camera")) {
-                        showingImageSourceSheet = true
-                    },
-                    .default(Text("Photo Library")) {
-                        showingImagePicker = true
-                    },
-                    .cancel()
-                ]
-            )
-        }
-        .toast(message: $commentViewModel.errorMessage, type: .error)
-        .toast(message: $commentViewModel.successMessage, type: .success)
+        .ignoresSafeArea(.keyboard, edges: .bottom) // ✅ removes bottom gap
     }
 }
 
