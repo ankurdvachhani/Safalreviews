@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct ProductDetailView: View {
     let product: ProductReview
@@ -827,6 +828,7 @@ struct ReviewCommentSheet: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 
                 // Add comment section
@@ -967,17 +969,18 @@ struct AddCommentView: View {
     let postId: String
     let onCommentAdded: () -> Void
     @StateObject private var commentViewModel = CommentViewModel()
-    @State private var commentText = ""
-    @State private var selectedImages: [UIImage] = []
     @State private var showingImagePicker = false
+    @State private var showingImageSourceSheet = false
     
     var body: some View {
         VStack(spacing: 0) {
-            // Image preview - compact version
-            if !selectedImages.isEmpty {
+            Divider()
+            
+            // Image preview - compact version using CommentViewModel
+            if !commentViewModel.selectedImages.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
+                        ForEach(Array(commentViewModel.selectedImages.enumerated()), id: \.offset) { index, image in
                             ZStack(alignment: .topTrailing) {
                                 Image(uiImage: image)
                                     .resizable()
@@ -986,13 +989,13 @@ struct AddCommentView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 6))
                                 
                                 Button(action: {
-                                    selectedImages.remove(at: index)
+                                    commentViewModel.removeImage(at: index)
                                 }) {
                                     Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 12))
                                         .foregroundColor(.white)
                                         .background(Color.black.opacity(0.6))
                                         .clipShape(Circle())
-                                        .font(.system(size: 12))
                                 }
                                 .offset(x: 4, y: -4)
                             }
@@ -1003,74 +1006,140 @@ struct AddCommentView: View {
                 }
                 .frame(height: 48)
             }
-            
-            // Comment input - compact version
-            HStack(spacing: 8) {
-                TextField("Add a comment...", text: $commentText, axis: .vertical)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .lineLimit(1...3)
-                
+            Spacer()
+            // Comment input - compact version with proper validation
+            HStack(alignment: .center, spacing: 8) {
+                // Image picker button with validation
                 Button(action: {
-                    showingImagePicker = true
+                    showingImageSourceSheet = true
                 }) {
                     Image(systemName: "photo")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
-                        .frame(width: 32, height: 32)
+                        .foregroundColor(.blue)
                 }
+                .disabled(commentViewModel.selectedImages.count >= 4)
                 
+                // Text input using CommentViewModel
+                TextField("Add a comment...", text: $commentViewModel.commentText, axis: .vertical)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .lineLimit(1...3)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(16)
+                
+                // Send button with loading state and proper validation
                 Button(action: {
                     Task {
-                        await addComment()
+                        await commentViewModel.addComment(to: postId)
+                        if commentViewModel.successMessage != nil {
+                            onCommentAdded()
+                        }
                     }
                 }) {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(commentText.isEmpty ? .secondary : Color.dynamicAccent)
-                        .frame(width: 32, height: 32)
+                    if commentViewModel.isAddingComment {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.white)
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
                 }
-                .disabled(commentText.isEmpty)
+                .frame(width: 32, height: 32)
+                .background(
+                    commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && commentViewModel.selectedImages.isEmpty
+                    ? Color.gray
+                    : Color.blue
+                )
+                .clipShape(Circle())
+                .disabled(commentViewModel.commentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && commentViewModel.selectedImages.isEmpty || commentViewModel.isAddingComment)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .padding(.bottom,8)
         }
         .background(Color(.systemBackground))
         .sheet(isPresented: $showingImagePicker) {
-            ProductDetailImagePicker(selectedImages: $selectedImages)
+            ProductDetailCommentImagePicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+        }
+        .sheet(isPresented: $showingImageSourceSheet) {
+            ProductDetailCommentCameraPicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+        }
+        .actionSheet(isPresented: $showingImageSourceSheet) {
+            ActionSheet(
+                title: Text("Add Image"),
+                message: Text("Choose how you want to add an image"),
+                buttons: [
+                    .default(Text("Camera")) {
+                        showingImageSourceSheet = true
+                    },
+                    .default(Text("Photo Library")) {
+                        showingImagePicker = true
+                    },
+                    .cancel()
+                ]
+            )
         }
         .toast(message: $commentViewModel.errorMessage, type: .error)
         .toast(message: $commentViewModel.successMessage, type: .success)
     }
+}
+
+// MARK: - Product Detail Comment Image Picker
+struct ProductDetailCommentImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImages: [UIImage]
+    let maxImages: Int
     
-    private func addComment() async {
-        // Set the comment text in the view model
-        commentViewModel.commentText = commentText
-        commentViewModel.selectedImages = selectedImages
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images
+        configuration.selectionLimit = maxImages - selectedImages.count
         
-        await commentViewModel.addComment(to: postId)
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: ProductDetailCommentImagePicker
         
-        if commentViewModel.successMessage != nil {
-            commentText = ""
-            selectedImages = []
-            onCommentAdded()
+        init(_ parent: ProductDetailCommentImagePicker) {
+            self.parent = parent
+        }
+        
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            
+            for result in results {
+                result.itemProvider.loadObject(ofClass: UIImage.self) { object, error in
+                    if let image = object as? UIImage {
+                        DispatchQueue.main.async {
+                            self.parent.selectedImages.append(image)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-// MARK: - Product Detail Image Picker
-struct ProductDetailImagePicker: UIViewControllerRepresentable {
+// MARK: - Product Detail Comment Camera Picker
+struct ProductDetailCommentCameraPicker: UIViewControllerRepresentable {
     @Binding var selectedImages: [UIImage]
+    let maxImages: Int
     @Environment(\.dismiss) private var dismiss
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
-        picker.sourceType = .photoLibrary
+        picker.sourceType = .camera
         picker.allowsEditing = false
         return picker
     }
@@ -1082,15 +1151,19 @@ struct ProductDetailImagePicker: UIViewControllerRepresentable {
     }
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: ProductDetailImagePicker
+        let parent: ProductDetailCommentCameraPicker
         
-        init(_ parent: ProductDetailImagePicker) {
+        init(_ parent: ProductDetailCommentCameraPicker) {
             self.parent = parent
         }
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
-                parent.selectedImages.append(image)
+                DispatchQueue.main.async {
+                    if self.parent.selectedImages.count < self.parent.maxImages {
+                        self.parent.selectedImages.append(image)
+                    }
+                }
             }
             parent.dismiss()
         }
