@@ -758,6 +758,9 @@ struct ReviewCommentSheet: View {
     let onCommentAdded: () -> Void
     @StateObject private var commentViewModel = CommentViewModel()
     @Environment(\.dismiss) private var dismiss
+    @State private var showingImagePicker = false
+    @State private var showingCamera = false
+    @State private var showingImageSourceSheet = false
     
     var body: some View {
         NavigationView {
@@ -836,6 +839,8 @@ struct ReviewCommentSheet: View {
                 // Add comment section
                 AddCommentView(
                     postId: review.id,
+                    commentViewModel: commentViewModel,
+                    showingImageSourceSheet: $showingImageSourceSheet,
                     onCommentAdded: {
                         onCommentAdded()
                         // Refresh comments after adding
@@ -856,6 +861,27 @@ struct ReviewCommentSheet: View {
             }
             .toast(message: $commentViewModel.errorMessage, type: .error)
             .toast(message: $commentViewModel.successMessage, type: .success)
+            .sheet(isPresented: $showingImagePicker) {
+                ProductDetailCommentImagePicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+            }
+            .sheet(isPresented: $showingCamera) {
+                ProductDetailCommentCameraPicker(selectedImages: $commentViewModel.selectedImages, maxImages: 4)
+            }
+            .actionSheet(isPresented: $showingImageSourceSheet) {
+                ActionSheet(
+                    title: Text("Add Image"),
+                    message: Text("Choose how you want to add an image"),
+                    buttons: [
+                        .default(Text("Camera")) {
+                            showingCamera = true
+                        },
+                        .default(Text("Photo Library")) {
+                            showingImagePicker = true
+                        },
+                        .cancel()
+                    ]
+                )
+            }
         }
         .task {
             await commentViewModel.fetchComments(for: review.id)
@@ -969,11 +995,9 @@ struct CommentCardView: View {
 // MARK: - Add Comment View
 struct AddCommentView: View {
     let postId: String
+    @ObservedObject var commentViewModel: CommentViewModel
+    @Binding var showingImageSourceSheet: Bool
     let onCommentAdded: () -> Void
-    @StateObject private var commentViewModel = CommentViewModel()
-    @State private var showingImagePicker = false
-    @State private var showingCamera = false
-    @State private var showingImageSourceSheet = false
     
     var body: some View {
         VStack(spacing: 0) {
