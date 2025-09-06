@@ -22,7 +22,7 @@ struct ProductDetailView: View {
                             productImageAndDetailsSection(productDetail)
                             
                             // Customer Reviews Section
-                            customerReviewsSection(productDetail)
+                           customerReviewsSection(productDetail)
                         }
                     }
                     .refreshable {
@@ -202,7 +202,7 @@ struct ProductDetailView: View {
                 .foregroundColor(.secondary)
                 .lineLimit(2)
             
-            // Overall Rating
+            // Overall Rating and Safal/UnSafal Tag
             HStack(spacing: 16) {
                 HStack(spacing: 8) {
                     ForEach(0..<5) { index in
@@ -216,6 +216,20 @@ struct ProductDetailView: View {
                     .font(.title3)
                     .fontWeight(.medium)
                     .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                // Safal/UnSafal tag - get from first review if available
+                if let firstReview = productDetail.reviews.first,
+                   let recommended = firstReview.recommended {
+                    HStack(spacing: 4) {
+                        Image(recommended.lowercased() == "safal" ? "suf" : "unsf")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundColor(.primary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                }
             }
             
             // Product Attributes
@@ -603,7 +617,7 @@ struct ReviewCardView: View {
                 
                 // Comment Button
                 Button(action: {
-                    onCommentTap(review)
+                   // onCommentTap(review)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
@@ -618,22 +632,19 @@ struct ReviewCardView: View {
             Divider()
                 .background(Color(.systemGray4))
             
-            // Safal Tag
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.system(size: 12))
-                    Text("Safal")
-                        .font(.caption)
-                        .fontWeight(.semibold)
+            // Safal/UnSafal Tag
+            if let recommended = review.recommended {
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(recommended.lowercased() == "safal" ? "suf" : "unsf")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundColor(.primary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    
+                    Spacer()
                 }
-                .foregroundColor(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color.green)
-                .clipShape(Capsule())
-                
-                Spacer()
             }
         }
         .padding(20)
@@ -647,63 +658,179 @@ struct ReviewCardView: View {
 struct ProductDetailShimmerView: View {
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // Product Image and Details Shimmer
-                HStack(alignment: .top, spacing: 20) {
-                    // Image shimmer
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .frame(width: 200, height: 200)
-                        .homeshimmerEffect()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    
-                    // Details shimmer
-                    VStack(alignment: .leading, spacing: 12) {
-                        ProductDetailShimmerBox(width: 60, height: 20)
-                        ProductDetailShimmerBox(width: 150, height: 24)
-                        ProductDetailShimmerBox(width: 120, height: 16)
-                        ProductDetailShimmerBox(width: 100, height: 16)
-                        ProductDetailShimmerBox(width: 80, height: 16)
-                        ProductDetailShimmerBox(width: 120, height: 40)
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+            VStack(spacing: 0) {
+                // Product Image and Details Section Shimmer
+                productImageAndDetailsShimmer
                 
-                // Rating breakdown shimmer
-                VStack(alignment: .leading, spacing: 12) {
-                    ProductDetailShimmerBox(width: 120, height: 20)
-                    VStack(spacing: 8) {
-                        ForEach(0..<5, id: \.self) { _ in
-                            ProductDetailShimmerBox(width: .infinity, height: 8)
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                
-                // Reviews shimmer
-                VStack(alignment: .leading, spacing: 16) {
-                    ProductDetailShimmerBox(width: 150, height: 20)
-                    .padding(.horizontal, 20)
-                    
-                    ForEach(0..<3, id: \.self) { _ in
-                        VStack(alignment: .leading, spacing: 12) {
-                            ProductDetailShimmerBox(width: 80, height: 14)
-                            ProductDetailShimmerBox(width: 200, height: 18)
-                            ProductDetailShimmerBox(width: .infinity, height: 16)
-                            ProductDetailShimmerBox(width: 120, height: 14)
-                        }
-                        .padding(16)
-                        .background(Color(.systemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 20)
-                    }
-                }
+                // Customer Reviews Section Shimmer
+                customerReviewsShimmer
             }
         }
         .disabled(true)
+    }
+    
+    // MARK: - Product Image and Details Shimmer
+    private var productImageAndDetailsShimmer: some View {
+        VStack(spacing: 0) {
+            // Product Image Shimmer (Full Width)
+            Rectangle()
+                .fill(Color(.systemGray5))
+                .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+                .homeshimmerEffect()
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+            
+            // Product Details Shimmer
+            VStack(alignment: .leading, spacing: 20) {
+                // Product Tag Shimmer
+                HStack {
+                    ProductDetailShimmerBox(width: 60, height: 24)
+                        .clipShape(Capsule())
+                    Spacer()
+                }
+                
+                // Title Shimmer
+                ProductDetailShimmerBox(width: .infinity, height: 32)
+                
+                // Subtitle Shimmer
+                ProductDetailShimmerBox(width: .infinity, height: 24)
+                
+                // Rating and Tag Shimmer
+                HStack(spacing: 16) {
+                    // Stars shimmer
+                    HStack(spacing: 8) {
+                        ForEach(0..<5, id: \.self) { _ in
+                            ProductDetailShimmerBox(width: 20, height: 20)
+                                .clipShape(Circle())
+                        }
+                    }
+                    
+                    // Reviews count shimmer
+                    ProductDetailShimmerBox(width: 120, height: 24)
+                    
+                    Spacer()
+                    
+                    // Safal tag shimmer
+                    ProductDetailShimmerBox(width: 40, height: 24)
+                        .clipShape(Capsule())
+                }
+                
+                // Product Attributes Shimmer
+                VStack(alignment: .leading, spacing: 12) {
+                    ProductDetailShimmerBox(width: 200, height: 16)
+                    ProductDetailShimmerBox(width: 180, height: 16)
+                    ProductDetailShimmerBox(width: 160, height: 16)
+                }
+                
+                // Write Review Button Shimmer
+                ProductDetailShimmerBox(width: .infinity, height: 50)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            
+            // Rating Breakdown Shimmer
+            VStack(alignment: .leading, spacing: 20) {
+                ProductDetailShimmerBox(width: 150, height: 24)
+                
+                VStack(spacing: 16) {
+                    ForEach((1...5).reversed(), id: \.self) { _ in
+                        HStack(spacing: 20) {
+                            ProductDetailShimmerBox(width: 40, height: 20)
+                            ProductDetailShimmerBox(width: .infinity, height: 12)
+                                .clipShape(Capsule())
+                            ProductDetailShimmerBox(width: 40, height: 20)
+                        }
+                    }
+                }
+            }
+            .padding(.vertical, 24)
+            .padding(.horizontal, 24)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+        }
+        .padding(.bottom, 20)
+    }
+    
+    // MARK: - Customer Reviews Shimmer
+    private var customerReviewsShimmer: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            // Section Header Shimmer
+            ProductDetailShimmerBox(width: 200, height: 24)
+                .padding(.horizontal, 20)
+            
+            // Reviews List Shimmer
+            LazyVStack(spacing: 24) {
+                ForEach(0..<3, id: \.self) { _ in
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Rating shimmer
+                        HStack(spacing: 6) {
+                            ForEach(0..<5, id: \.self) { _ in
+                                ProductDetailShimmerBox(width: 16, height: 16)
+                                    .clipShape(Circle())
+                            }
+                        }
+                        
+                        // Title shimmer
+                        ProductDetailShimmerBox(width: .infinity, height: 20)
+                        
+                        // Description shimmer
+                        VStack(alignment: .leading, spacing: 4) {
+                            ProductDetailShimmerBox(width: .infinity, height: 16)
+                            ProductDetailShimmerBox(width: .infinity, height: 16)
+                            ProductDetailShimmerBox(width: 200, height: 16)
+                        }
+                        
+                        // Review Image shimmer
+                        ProductDetailShimmerBox(width: .infinity, height: 140)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        // Reviewer Info shimmer
+                        HStack {
+                            ProductDetailShimmerBox(width: 100, height: 16)
+                            Spacer()
+                            ProductDetailShimmerBox(width: 120, height: 16)
+                        }
+                        
+                        // Engagement metrics shimmer
+                        HStack {
+                            ProductDetailShimmerBox(width: 80, height: 14)
+                            Spacer()
+                            ProductDetailShimmerBox(width: 100, height: 14)
+                        }
+                        
+                        Divider()
+                        
+                        // Interaction buttons shimmer
+                        HStack {
+                            ProductDetailShimmerBox(width: 60, height: 20)
+                            Spacer()
+                            ProductDetailShimmerBox(width: 70, height: 20)
+                            Spacer()
+                            ProductDetailShimmerBox(width: 80, height: 20)
+                        }
+                        
+                        Divider()
+                        
+                        // Safal tag shimmer
+                        HStack {
+                            ProductDetailShimmerBox(width: 60, height: 24)
+                                .clipShape(Capsule())
+                            Spacer()
+                        }
+                    }
+                    .padding(20)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
     }
 }
 
