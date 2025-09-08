@@ -10,7 +10,7 @@ struct AddCustomCategoryView: View {
     @State private var customBrand: String = ""
     @State private var customProduct: String = ""
     
-    let categoryTypes = ["product", "person"]
+    let categoryTypes = ["product", "person", "place"]
     
     var body: some View {
         NavigationView {

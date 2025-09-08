@@ -4,6 +4,7 @@ import PhotosUI
 struct CreatePostView: View {
     @StateObject private var viewModel = PostCreationViewModel()
     @Environment(\.dismiss) private var dismiss
+    var onPostCreated: (() -> Void)?
     
     @State private var showImagePicker = false
     @State private var showVideoPicker = false
@@ -93,20 +94,15 @@ struct CreatePostView: View {
                 selectedVideoItems = []
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("OK") {
-                viewModel.clearError()
+        .toast(message: $viewModel.errorMessage, type: .error)
+        .toast(message: $viewModel.successMessage, type: .success)
+        .onAppear {
+            viewModel.onPostCreated = {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    dismiss()
+                    onPostCreated?()
+                }
             }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
-        .alert("Success", isPresented: .constant(viewModel.successMessage != nil)) {
-            Button("OK") {
-                viewModel.clearSuccess()
-                dismiss()
-            }
-        } message: {
-            Text(viewModel.successMessage ?? "")
         }
     }
     
@@ -214,6 +210,11 @@ struct CreatePostView: View {
                 Button("Person") {
                     Task {
                         await viewModel.updateCategoryType("person")
+                    }
+                }
+                Button("Place") {
+                    Task {
+                        await viewModel.updateCategoryType("place")
                     }
                 }
             } label: {

@@ -30,10 +30,45 @@ struct CreatePostRequest: Codable {
 
 struct CreatePostResponse: Codable {
     let success: Bool
-    let data: Post
+    let data: CreatePostData
     let errors: [String]
     let timestamp: String
     let message: String
+}
+
+struct CreatePostData: Codable {
+    let id: String
+    let title: String
+    let description: String
+    let imgs: [String]
+    let videos: [String]
+    let recommended: String
+    let slug: String
+    let dislikesCount: Int
+    let likes: [String]
+    let brand: String
+    let shares: [String]
+    let likesCount: Int
+    let category: String
+    let createdAt: String
+    let sharesCount: Int
+    let reviews: [String]
+    let subcategory: String
+    let updatedAt: String
+    let user: String
+    let dislikes: [String]
+    let product: String
+    let price: Int
+    let rating: Int
+    let categoryType: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case title, description, imgs, videos, recommended, slug
+        case dislikesCount, likes, brand, shares, likesCount, category
+        case createdAt, sharesCount, reviews, subcategory, updatedAt
+        case user, dislikes, product, price, rating, categoryType
+    }
 }
 
 // MARK: - Product List Response Models
@@ -122,19 +157,13 @@ struct PostVideoUploadRequest: Codable {
 }
 
 struct PostImageUploadResponse: Codable {
-    let success: Bool
+    let status: String
     let data: PostUploadData
-    let errors: [String]
-    let timestamp: String
-    let message: String
 }
 
 struct PostVideoUploadResponse: Codable {
-    let success: Bool
+    let status: String
     let data: PostUploadData
-    let errors: [String]
-    let timestamp: String
-    let message: String
 }
 
 struct PostUploadData: Codable {
@@ -151,7 +180,7 @@ struct PostCreationState {
     var selectedVideos: [URL] = []
     var uploadedImageURLs: [String] = []
     var uploadedVideoURLs: [String] = []
-    var categoryType: String = "product"
+    var categoryType: String = "Product"
     var selectedCategory: Category?
     var selectedSubcategory: Subcategory?
     var selectedBrand: Brand?

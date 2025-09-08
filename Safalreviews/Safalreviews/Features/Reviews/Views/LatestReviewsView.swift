@@ -12,6 +12,7 @@ struct LatestReviewsView: View {
     @State private var selectedMediaURLs: [String] = []
     @State private var showingCommentSheet = false
     @State private var selectedPostForComments: Post?
+    @State private var showingCreatePost = false
     
     var body: some View {
         NavigationView {
@@ -57,6 +58,14 @@ struct LatestReviewsView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+        }
+        .sheet(isPresented: $showingCreatePost) {
+            CreatePostView(onPostCreated: {
+                // Refresh the posts when a new post is created
+                Task {
+                    await viewModel.refreshPosts()
+                }
+            })
         }
     }
     
@@ -117,7 +126,7 @@ struct LatestReviewsView: View {
                 .cornerRadius(20)
                 
                 Button(action: {
-                    NavigationManager.shared.navigate(to: .createPost, style: .presentSheet())
+                    showingCreatePost = true
                 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 18, weight: .semibold))

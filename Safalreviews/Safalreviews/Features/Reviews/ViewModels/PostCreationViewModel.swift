@@ -9,6 +9,7 @@ class PostCreationViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
     @Published var isCreatingPost = false
+    var onPostCreated: (() -> Void)?
     
     // Filter data
     @Published var categories: [Category] = []
@@ -50,8 +51,7 @@ class PostCreationViewModel: ObservableObject {
         do {
             let queryItems = [
                 URLQueryItem(name: "page", value: "1"),
-                URLQueryItem(name: "limit", value: "100"),
-                URLQueryItem(name: "categoryType", value: state.categoryType)
+                URLQueryItem(name: "limit", value: "100")
             ]
             
             let endpoint = Endpoint(
@@ -75,7 +75,7 @@ class PostCreationViewModel: ObservableObject {
             let queryItems = [
                 URLQueryItem(name: "page", value: "1"),
                 URLQueryItem(name: "limit", value: "100"),
-                URLQueryItem(name: "categoryType", value: state.categoryType)
+                URLQueryItem(name: "category", value: state.selectedCategory?.id)
             ]
             
             let endpoint = Endpoint(
@@ -99,7 +99,8 @@ class PostCreationViewModel: ObservableObject {
             let queryItems = [
                 URLQueryItem(name: "page", value: "1"),
                 URLQueryItem(name: "limit", value: "100"),
-                URLQueryItem(name: "categoryType", value: state.categoryType)
+                URLQueryItem(name: "categoryType", value: state.categoryType),
+                URLQueryItem(name: "subCategory", value: state.selectedSubcategory?.id ?? "")
             ]
             
             let endpoint = Endpoint(
@@ -264,7 +265,7 @@ class PostCreationViewModel: ObservableObject {
                 description: state.description.trimmingCharacters(in: .whitespacesAndNewlines),
                 imgs: uploadedImageURLs,
                 videos: uploadedVideoURLs,
-                categoryType: state.categoryType,
+                categoryType: state.categoryType.lowercased(),
                 category: state.isUsingCustomCategory ? nil : state.selectedCategory?.id,
                 subcategory: state.isUsingCustomCategory ? nil : state.selectedSubcategory?.id,
                 brand: state.isUsingCustomCategory ? nil : state.selectedBrand?.id,
@@ -305,8 +306,11 @@ class PostCreationViewModel: ObservableObject {
                 let response = try JSONDecoder().decode(CreatePostResponse.self, from: data)
                 
                 if response.success {
-                    successMessage = "Post created successfully!"
+                    successMessage = response.message
                     clearForm()
+                    
+                    // Call the callback to notify parent view
+                    onPostCreated?()
                 } else {
                     errorMessage = "Failed to create post"
                 }
@@ -389,17 +393,21 @@ class PostCreationViewModel: ObservableObject {
         if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
             let uploadUrlResponse = try JSONDecoder().decode(PostImageUploadResponse.self, from: data)
             
-            print("Got signed URL for upload: \(uploadUrlResponse.data.uploadUrl)")
-            
-            // Upload file using NetworkManager
-            try await networkManager.uploadFile(
-                url: uploadUrlResponse.data.uploadUrl,
-                data: data,
-                contentType: contentType
-            )
-            
-            print("✅ Media uploaded successfully")
-            return uploadUrlResponse.data.fileUrl
+            if uploadUrlResponse.status == "success" {
+                print("Got signed URL for upload: \(uploadUrlResponse.data.uploadUrl)")
+                
+                // Upload file using NetworkManager
+                try await networkManager.uploadFile(
+                    url: uploadUrlResponse.data.uploadUrl,
+                    data: data,
+                    contentType: contentType
+                )
+                
+                print("✅ Media uploaded successfully")
+                return uploadUrlResponse.data.fileUrl
+            } else {
+                throw NetworkError.apiError("Upload URL request failed")
+            }
         } else {
             throw NetworkError.apiError("Failed to get upload URL: \(httpResponse.statusCode)")
         }
