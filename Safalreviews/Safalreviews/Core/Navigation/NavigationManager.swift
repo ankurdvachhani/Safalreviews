@@ -48,6 +48,7 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
     case incidentDetailById(incidentId: String)
     case addIncident(incident: Incident? = nil, linkedFromIncident: Incident? = nil)
     case incidentReportList
+    case createPost
     
     // MARK: - Identifiable Conformance
     var id: String {
@@ -106,6 +107,8 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
             return "addIncident-\(incident?.id ?? "new")-\(linkedFromIncident?.id ?? "no-link")"
         case .incidentReportList:
             return "incidentReportList"
+        case .createPost:
+            return "createPost"
         }
     }
     
@@ -183,6 +186,8 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
             hasher.combine(linkedFromIncident?.id ?? "no-link")
         case .incidentReportList:
             hasher.combine("incidentReportList")
+        case .createPost:
+            hasher.combine("createPost")
         }
     }
     
@@ -202,7 +207,7 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
         case  notificationview, notificationlistview
         case drainageListView, drainageDetail, drainageDetailByDrainageId, addDrainage, addDrainageFromIncident
         case patientList
-        case dashboard, doctorDashboard, nurseDashboard, patientDashboard, doctorPatientDashboard, barcodeScanner, educationalTips, incidentList, incidentDetail, incidentDetailById, addIncident, incidentReportList
+        case dashboard, doctorDashboard, nurseDashboard, patientDashboard, doctorPatientDashboard, barcodeScanner, educationalTips, incidentList, incidentDetail, incidentDetailById, addIncident, incidentReportList, createPost
     }
     
     func encode(to encoder: Encoder) throws {
@@ -281,6 +286,8 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
             try container.encodeIfPresent(linkedFromIncident, forKey: .linkedFromIncident)
         case .incidentReportList:
             try container.encode(DestinationType.incidentReportList, forKey: .type)
+        case .createPost:
+            try container.encode(DestinationType.createPost, forKey: .type)
         }
     }
     
@@ -361,6 +368,8 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
             self = .addIncident(incident: incident, linkedFromIncident: linkedFromIncident)
         case .incidentReportList:
             self = .incidentReportList
+        case .createPost:
+            self = .createPost
         }
     }
     
@@ -431,6 +440,8 @@ enum NavigationDestination: Identifiable, Hashable, Codable {
                 .environmentObject(IncidentStore())
         case .incidentReportList:
             IncidentReportListView()
+        case .createPost:
+            CreatePostView()
         }
     }
 }

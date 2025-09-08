@@ -117,7 +117,7 @@ struct LatestReviewsView: View {
                 .cornerRadius(20)
                 
                 Button(action: {
-                    // TODO: Add new post action
+                    NavigationManager.shared.navigate(to: .createPost, style: .presentSheet())
                 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 18, weight: .semibold))

@@ -80,7 +80,7 @@ struct BrandInfo: Codable {
     }
 }
 
-struct SubCategoryInfo: Codable {
+struct SubCategoryInfo: Codable, Hashable {
     let id: String
     let name: String
     let slug: String
@@ -92,7 +92,7 @@ struct SubCategoryInfo: Codable {
     }
 }
 
-struct CategoryInfo: Codable {
+struct CategoryInfo: Codable, Hashable {
     let id: String
     let name: String
     let slug: String
@@ -123,7 +123,7 @@ struct CategoryResponse: Codable {
     let message: String
 }
 
-struct Category: Identifiable, Codable {
+struct Category: Identifiable, Codable, Hashable {
     let id: String
     let name: String
     let isActive: Bool
@@ -160,7 +160,7 @@ struct SubcategoryResponse: Codable {
     let message: String
 }
 
-struct Subcategory: Identifiable, Codable {
+struct Subcategory: Identifiable, Codable, Hashable {
     let id: String
     let name: String
     let category: CategoryInfo
@@ -199,7 +199,7 @@ struct BrandResponse: Codable {
     let message: String
 }
 
-struct Brand: Identifiable, Codable {
+struct Brand: Identifiable, Codable, Hashable {
     let id: String
     let name: String
     let subCategory: SubCategoryInfo

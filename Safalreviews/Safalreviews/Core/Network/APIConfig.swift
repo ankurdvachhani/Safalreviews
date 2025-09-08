@@ -60,6 +60,10 @@ enum APIConfig {
         static let safalutilitiesLogin = "/api/auth/login-safalutilities"
         static let connectsafalutilities = "/api/auth/connect-safalutilities"
         static let disconnectsafalutilities = "/api/auth/disconnect-safalutilities"
+        
+        // MARK: - Post Creation APIs
+        static let createPost = "/api/post"
+        static let getProducts = "/api/admin/products/ratings/all"
       
       
     }

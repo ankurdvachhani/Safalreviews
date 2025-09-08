@@ -617,7 +617,7 @@ struct ReviewCardView: View {
                 
                 // Comment Button
                 Button(action: {
-                   // onCommentTap(review)
+                    onCommentTap(review)
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "bubble.left")
