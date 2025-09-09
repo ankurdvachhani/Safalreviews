@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import AVKit
 
 struct CreatePostView: View {
     @StateObject private var viewModel = PostCreationViewModel()
@@ -11,6 +12,12 @@ struct CreatePostView: View {
     @State private var showDocumentPicker = false
     @State private var selectedImageItems: [PhotosPickerItem] = []
     @State private var selectedVideoItems: [PhotosPickerItem] = []
+    
+    // Camera states
+    @State private var showImageCamera = false
+    @State private var showVideoCamera = false
+    @State private var showMediaActionSheet = false
+    @State private var showVideoActionSheet = false
     
     // Validation states
     @State private var titleError: String?
@@ -78,6 +85,46 @@ struct CreatePostView: View {
             maxSelectionCount: 5,
             matching: .videos
         )
+        .sheet(isPresented: $showImageCamera) {
+            ImagePicker(sourceType: .camera) { image in
+                viewModel.addImage(image)
+            }
+        }
+        .sheet(isPresented: $showVideoCamera) {
+            VideoPicker(sourceType: .camera) { videoURL in
+                viewModel.addVideo(videoURL)
+            }
+        }
+        .confirmationDialog("Add Photos", isPresented: $showMediaActionSheet, titleVisibility: .visible) {
+            Button("Camera") {
+                print("📸 Camera selected for photos")
+                showImageCamera = true
+            }
+            Button("Photo Library") {
+                print("📸 Photo Library selected")
+                showImagePicker = true
+            }
+            Button("Cancel", role: .cancel) { 
+                print("📸 Photo selection cancelled")
+            }
+        } message: {
+            Text("Choose how you want to add photos")
+        }
+        .confirmationDialog("Add Videos", isPresented: $showVideoActionSheet, titleVisibility: .visible) {
+            Button("Camera") {
+                print("🎥 Camera selected for videos")
+                showVideoCamera = true
+            }
+            Button("Video Library") {
+                print("🎥 Video Library selected")
+                showVideoPicker = true
+            }
+            Button("Cancel", role: .cancel) { 
+                print("🎥 Video selection cancelled")
+            }
+        } message: {
+            Text("Choose how you want to add videos")
+        }
         .onChange(of: selectedImageItems) { items in
             Task {
                 for item in items {
@@ -591,7 +638,8 @@ struct CreatePostView: View {
             // Media Buttons
             HStack(spacing: 16) {
                 Button(action: {
-                    showImagePicker = true
+                    print("📸 Photo button tapped - showing action sheet")
+                    showMediaActionSheet = true
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "camera.fill")
@@ -611,7 +659,8 @@ struct CreatePostView: View {
                 }
                 
                 Button(action: {
-                    showVideoPicker = true
+                    print("🎥 Video button tapped - showing action sheet")
+                    showVideoActionSheet = true
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "video.fill")
@@ -1104,6 +1153,8 @@ struct MediaPreviewItem: View {
     let type: MediaType
     let onRemove: () -> Void
     
+    @State private var videoThumbnail: UIImage?
+    
     enum MediaType {
         case image, video
     }
@@ -1116,19 +1167,44 @@ struct MediaPreviewItem: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } else if type == .video, let videoURL = videoURL {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .overlay(
-                            VStack(spacing: 4) {
-                                Image(systemName: "play.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.white)
-                                Text("Video")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.white)
-                            }
-                        )
+                    if let thumbnail = videoThumbnail {
+                        Image(uiImage: thumbnail)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .overlay(
+                                // Play button overlay
+                                VStack {
+                                    Spacer()
+                                    HStack {
+                                        Spacer()
+                                        Image(systemName: "play.circle.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.black.opacity(0.6))
+                                                    .frame(width: 32, height: 32)
+                                            )
+                                        Spacer()
+                                    }
+                                    Spacer()
+                                }
+                            )
+                    } else {
+                        Rectangle()
+                            .fill(Color(.systemGray5))
+                            .overlay(
+                                VStack(spacing: 4) {
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.white)
+                                    Text("Video")
+                                        .font(.caption2)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.white)
+                                }
+                            )
+                    }
                 }
             }
             .frame(width: 100, height: 100)
@@ -1149,6 +1225,113 @@ struct MediaPreviewItem: View {
                     )
             }
             .offset(x: 8, y: -8)
+        }
+        .onAppear {
+            if type == .video, let videoURL = videoURL, videoThumbnail == nil {
+                generateVideoThumbnail(from: videoURL)
+            }
+        }
+    }
+    
+    private func generateVideoThumbnail(from url: URL) {
+        let asset = AVAsset(url: url)
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.appliesPreferredTrackTransform = true
+        imageGenerator.maximumSize = CGSize(width: 200, height: 200)
+        
+        let time = CMTime(seconds: 1, preferredTimescale: 60)
+        
+        Task {
+            do {
+                let cgImage = try await imageGenerator.image(at: time).image
+                await MainActor.run {
+                    self.videoThumbnail = UIImage(cgImage: cgImage)
+                }
+            } catch {
+                print("Error generating video thumbnail: \(error)")
+            }
+        }
+    }
+}
+
+// MARK: - Camera Components
+
+struct ImagePicker: UIViewControllerRepresentable {
+    let sourceType: UIImagePickerController.SourceType
+    let onImagePicked: (UIImage) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = sourceType
+        picker.delegate = context.coordinator
+        picker.allowsEditing = true
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage {
+                parent.onImagePicked(image)
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+struct VideoPicker: UIViewControllerRepresentable {
+    let sourceType: UIImagePickerController.SourceType
+    let onVideoPicked: (URL) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = sourceType
+        picker.mediaTypes = ["public.movie"]
+        picker.delegate = context.coordinator
+        picker.videoQuality = .typeHigh
+        picker.videoMaximumDuration = 300 // 5 minutes max
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: VideoPicker
+        
+        init(_ parent: VideoPicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let videoURL = info[.mediaURL] as? URL {
+                parent.onVideoPicked(videoURL)
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
