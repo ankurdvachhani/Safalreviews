@@ -30,10 +30,9 @@ struct CreatePostRequest: Codable {
 
 struct CreatePostResponse: Codable {
     let success: Bool
-    let data: CreatePostData
-    let errors: [String]
-    let timestamp: String
-    let message: String
+    let errors: [String]?
+    let timestamp: String?
+    let message: String?
 }
 
 struct CreatePostData: Codable {

@@ -21,8 +21,8 @@ struct CreatePostView: View {
                 // Content
                 ScrollView {
                     VStack(spacing: 24) {
-                        // User Info Section
-                        userInfoSection
+//                        // User Info Section
+//                        userInfoSection
                         
                         // Category Selection Section
                         categorySelectionSection
@@ -33,14 +33,14 @@ struct CreatePostView: View {
                         // Description Section
                         descriptionSection
                         
-                        // Media Section
-                        mediaSection
-                        
-                        // Recommendation Section
-                        recommendationSection
-                        
-                        // Rating Section
-                        ratingSection
+//                        // Media Section
+//                        mediaSection
+//                        
+//                        // Recommendation Section
+//                        recommendationSection
+//                        
+//                        // Rating Section
+//                        ratingSection
                         
                         // Price Section
                         priceSection
@@ -50,7 +50,7 @@ struct CreatePostView: View {
                 }
                 
                 // Action Buttons
-                actionButtonsView
+             //   actionButtonsView
             }
             .navigationBarHidden(true)
             .background(Color(.systemGroupedBackground))
@@ -190,7 +190,7 @@ struct CreatePostView: View {
             }
             
             // Add Custom Button
-            addCustomButton
+           addCustomButton
         }
     }
     
@@ -204,17 +204,17 @@ struct CreatePostView: View {
             Menu {
                 Button("Product") {
                     Task {
-                        await viewModel.updateCategoryType("product")
+                        await viewModel.updateCategoryType("Product")
                     }
                 }
                 Button("Person") {
                     Task {
-                        await viewModel.updateCategoryType("person")
+                        await viewModel.updateCategoryType("Person")
                     }
                 }
                 Button("Place") {
                     Task {
-                        await viewModel.updateCategoryType("place")
+                        await viewModel.updateCategoryType("Place")
                     }
                 }
             } label: {

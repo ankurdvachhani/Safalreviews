@@ -51,7 +51,8 @@ class PostCreationViewModel: ObservableObject {
         do {
             let queryItems = [
                 URLQueryItem(name: "page", value: "1"),
-                URLQueryItem(name: "limit", value: "100")
+                URLQueryItem(name: "limit", value: "100"),
+                URLQueryItem(name: "categoryType", value: state.categoryType)
             ]
             
             let endpoint = Endpoint(
@@ -90,7 +91,7 @@ class PostCreationViewModel: ObservableObject {
             
         } catch {
             print("❌ Error fetching subcategories: \(error)")
-            errorMessage = "Failed to fetch subcategories"
+          //  errorMessage = "Failed to fetch subcategories"
         }
     }
     
@@ -115,7 +116,7 @@ class PostCreationViewModel: ObservableObject {
             
         } catch {
             print("❌ Error fetching brands: \(error)")
-            errorMessage = "Failed to fetch brands"
+          //  errorMessage = "Failed to fetch brands"
         }
     }
     
@@ -148,7 +149,7 @@ class PostCreationViewModel: ObservableObject {
             
         } catch {
             print("❌ Error fetching products: \(error)")
-            errorMessage = "Failed to fetch products"
+          //  errorMessage = "Failed to fetch products"
         }
     }
     
@@ -346,7 +347,7 @@ class PostCreationViewModel: ObservableObject {
             folder: "reviews/posts/images"
         )
         
-        return try await uploadMedia(uploadRequest: uploadRequest, data: imageData, contentType: "image/jpeg")
+        return try await uploadMedia(uploadRequest: uploadRequest, filedata: imageData, contentType: "image/jpeg")
     }
     
     private func uploadVideo(_ videoURL: URL) async throws -> String? {
@@ -363,10 +364,10 @@ class PostCreationViewModel: ObservableObject {
         )
         
         let contentType = fileExtension.lowercased() == "mp4" ? "video/mp4" : "video/\(fileExtension)"
-        return try await uploadMedia(uploadRequest: uploadRequest, data: videoData, contentType: contentType)
+        return try await uploadMedia(uploadRequest: uploadRequest, filedata: videoData, contentType: contentType)
     }
     
-    private func uploadMedia<T: Codable>(uploadRequest: T, data: Data, contentType: String) async throws -> String? {
+    private func uploadMedia<T: Codable>(uploadRequest: T, filedata: Data, contentType: String) async throws -> String? {
         // Create the URL request for upload URL
         guard let url = URL(string: APIConfig.baseURL + APIConfig.Path.getUploadUrls) else {
             throw NetworkError.invalidURL
@@ -393,21 +394,17 @@ class PostCreationViewModel: ObservableObject {
         if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
             let uploadUrlResponse = try JSONDecoder().decode(PostImageUploadResponse.self, from: data)
             
-            if uploadUrlResponse.status == "success" {
-                print("Got signed URL for upload: \(uploadUrlResponse.data.uploadUrl)")
-                
-                // Upload file using NetworkManager
-                try await networkManager.uploadFile(
-                    url: uploadUrlResponse.data.uploadUrl,
-                    data: data,
-                    contentType: contentType
-                )
-                
-                print("✅ Media uploaded successfully")
-                return uploadUrlResponse.data.fileUrl
-            } else {
-                throw NetworkError.apiError("Upload URL request failed")
-            }
+            print("Got signed URL for upload: \(uploadUrlResponse.data.uploadUrl)")
+            
+            // Upload file using NetworkManager
+            try await networkManager.uploadFile(
+                url: uploadUrlResponse.data.uploadUrl,
+                data: filedata,
+                contentType: contentType
+            )
+            
+            print("✅ Media uploaded successfully")
+            return uploadUrlResponse.data.fileUrl
         } else {
             throw NetworkError.apiError("Failed to get upload URL: \(httpResponse.statusCode)")
         }
