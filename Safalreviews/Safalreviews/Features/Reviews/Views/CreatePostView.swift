@@ -33,14 +33,14 @@ struct CreatePostView: View {
                         // Description Section
                         descriptionSection
                         
-//                        // Media Section
-//                        mediaSection
-//                        
-//                        // Recommendation Section
-//                        recommendationSection
-//                        
-//                        // Rating Section
-//                        ratingSection
+                        // Media Section
+                        mediaSection
+                        
+                        // Recommendation Section
+                        recommendationSection
+                        
+                        // Rating Section
+                        ratingSection
                         
                         // Price Section
                         priceSection
@@ -50,7 +50,7 @@ struct CreatePostView: View {
                 }
                 
                 // Action Buttons
-             //   actionButtonsView
+                actionButtonsView
             }
             .navigationBarHidden(true)
             .background(Color(.systemGroupedBackground))
