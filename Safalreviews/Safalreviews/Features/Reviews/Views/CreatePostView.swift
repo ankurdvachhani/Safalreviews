@@ -12,6 +12,11 @@ struct CreatePostView: View {
     @State private var selectedImageItems: [PhotosPickerItem] = []
     @State private var selectedVideoItems: [PhotosPickerItem] = []
     
+    // Validation states
+    @State private var titleError: String?
+    @State private var descriptionError: String?
+    @State private var categoryError: String?
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -20,7 +25,7 @@ struct CreatePostView: View {
                 
                 // Content
                 ScrollView {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 32) {
 //                        // User Info Section
 //                        userInfoSection
                         
@@ -106,6 +111,46 @@ struct CreatePostView: View {
         }
     }
     
+    // MARK: - Validation Functions
+    
+    private func validateTitle() {
+        let trimmedTitle = viewModel.state.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedTitle.isEmpty {
+            titleError = "Title is required"
+        } else if trimmedTitle.count < 5 {
+            titleError = "Title must be at least 5 characters"
+        } else if trimmedTitle.count > 100 {
+            titleError = "Title must be less than 100 characters"
+        } else {
+            titleError = nil
+        }
+    }
+    
+    private func validateDescription() {
+        let trimmedDescription = viewModel.state.description.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedDescription.isEmpty {
+            descriptionError = "Description is required"
+        } else if trimmedDescription.count < 10 {
+            descriptionError = "Description must be at least 10 characters"
+        } else if trimmedDescription.count > 2000 {
+            descriptionError = "Description must be less than 2000 characters"
+        } else {
+            descriptionError = nil
+        }
+    }
+    
+    private func validateCategory() {
+        if !viewModel.state.isUsingCustomCategory && viewModel.state.selectedCategory == nil {
+            categoryError = "Please select a category"
+        } else if viewModel.state.isUsingCustomCategory && viewModel.state.customCategory.isEmpty {
+            categoryError = "Please enter a custom category"
+        } else {
+            categoryError = nil
+        }
+    }
+    
     // MARK: - Header View
     
     private var headerView: some View {
@@ -114,11 +159,18 @@ struct CreatePostView: View {
                 dismiss()
             }) {
                 Image(systemName: "xmark")
-                    .font(.title2)
+                    .font(.title3)
+                    .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .frame(width: 44, height: 44)
-                    .background(Color(.systemGray6))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color(.systemGray6))
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(.systemGray4), lineWidth: 1)
+                            )
+                    )
             }
             
             Spacer()
@@ -136,7 +188,10 @@ struct CreatePostView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color(.systemBackground))
+        .background(
+            Color(.systemBackground)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
     }
     
     // MARK: - User Info Section
@@ -177,7 +232,7 @@ struct CreatePostView: View {
     // MARK: - Category Selection Section
     
     private var categorySelectionSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // Category Type Dropdown
             categoryTypeDropdown
             
@@ -190,54 +245,121 @@ struct CreatePostView: View {
             }
             
             // Add Custom Button
-           addCustomButton
+            addCustomButton
         }
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
     }
     
     private var categoryTypeDropdown: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Category Type")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Category Type")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("*")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                
+                Spacer()
+            }
             
             Menu {
-                Button("Product") {
+                Button(action: {
                     Task {
                         await viewModel.updateCategoryType("Product")
                     }
+                }) {
+                    HStack {
+                        Image(systemName: "cube.box.fill")
+                        Text("Product")
+                        if viewModel.state.categoryType == "Product" {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
                 }
-                Button("Person") {
+                
+                Button(action: {
                     Task {
                         await viewModel.updateCategoryType("Person")
                     }
+                }) {
+                    HStack {
+                        Image(systemName: "person.fill")
+                        Text("Person")
+                        if viewModel.state.categoryType == "Person" {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
                 }
-                Button("Place") {
+                
+                Button(action: {
                     Task {
                         await viewModel.updateCategoryType("Place")
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "location.fill")
+                        Text("Place")
+                        if viewModel.state.categoryType == "Place" {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
                     }
                 }
             } label: {
                 HStack {
-                    Image(systemName: "tag.fill")
-                        .foregroundColor(.pink)
-                        .font(.system(size: 16))
+                    Image(systemName: categoryTypeIcon)
+                        .foregroundColor(.dynamicAccent)
+                        .font(.system(size: 18))
                     
                     Text(viewModel.state.categoryType.capitalized)
                         .foregroundColor(.primary)
                         .font(.body)
+                        .fontWeight(.medium)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.down")
                         .foregroundColor(.secondary)
                         .font(.system(size: 14))
+                        .rotationEffect(.degrees(0))
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.state.categoryType)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.dynamicAccent, lineWidth: 1.5)
+                        )
+                )
             }
+        }
+    }
+    
+    private var categoryTypeIcon: String {
+        switch viewModel.state.categoryType {
+        case "Product":
+            return "cube.box.fill"
+        case "Person":
+            return "person.fill"
+        case "Place":
+            return "location.fill"
+        default:
+            return "tag.fill"
         }
     }
     
@@ -304,72 +426,151 @@ struct CreatePostView: View {
         Button(action: {
             viewModel.showCustomCategoryModal = true
         }) {
-            HStack {
+            HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
                     .foregroundColor(.dynamicAccent)
-                Text("Add Custom")
-                    .fontWeight(.medium)
+                    .font(.system(size: 18))
+                Text("Add Custom Category")
+                    .fontWeight(.semibold)
                     .foregroundColor(.dynamicAccent)
             }
             .font(.subheadline)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.dynamicAccent.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.dynamicAccent.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.dynamicAccent.opacity(0.3), lineWidth: 1)
+                    )
+            )
         }
     }
     
     // MARK: - Title Section
     
     private var titleSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Add a title for your post...*")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Post Title")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("*")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                
+                Spacer()
+            }
             
-            TextField("Enter post title", text: $viewModel.state.title)
-                .textFieldStyle(PlainTextFieldStyle())
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .font(.body)
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Enter a compelling title for your post", text: $viewModel.state.title)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        titleError != nil ? Color.red : 
+                                        viewModel.state.title.isEmpty ? Color(.systemGray4) : Color.dynamicAccent,
+                                        lineWidth: titleError != nil ? 2 : 1
+                                    )
+                            )
+                    )
+                    .font(.body)
+                    .onChange(of: viewModel.state.title) { _ in
+                        validateTitle()
+                    }
+                
+                if let error = titleError {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
         }
     }
     
     // MARK: - Description Section
     
     private var descriptionSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("What's on your mind? *")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
-            
-            ZStack(alignment: .topLeading) {
-                TextEditor(text: $viewModel.state.description)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .frame(minHeight: 120)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Description")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
                 
-                if viewModel.state.description.isEmpty {
-                    Text("Share your thoughts...")
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
-                        .allowsHitTesting(false)
-                }
+                Text("*")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                
+                Spacer()
             }
             
-            // Character count
-            HStack {
-                Spacer()
-                Text("\(viewModel.state.description.count)/2000")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $viewModel.state.description)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemBackground))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            descriptionError != nil ? Color.red : 
+                                            viewModel.state.description.isEmpty ? Color(.systemGray4) : Color.dynamicAccent,
+                                            lineWidth: descriptionError != nil ? 2 : 1
+                                        )
+                                )
+                        )
+                        .frame(minHeight: 120)
+                        .onChange(of: viewModel.state.description) { _ in
+                            validateDescription()
+                        }
+                    
+                    if viewModel.state.description.isEmpty {
+                        Text("Share your thoughts and experiences...")
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 20)
+                            .allowsHitTesting(false)
+                    }
+                }
+                
+                if let error = descriptionError {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+                
+                // Character count
+                HStack {
+                    Spacer()
+                    Text("\(viewModel.state.description.count)/2000")
+                        .font(.caption)
+                        .foregroundColor(viewModel.state.description.count > 1800 ? .red : .secondary)
+                }
             }
         }
     }
@@ -377,41 +578,56 @@ struct CreatePostView: View {
     // MARK: - Media Section
     
     private var mediaSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Media (Optional)")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            
             // Media Buttons
             HStack(spacing: 16) {
                 Button(action: {
                     showImagePicker = true
                 }) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "camera.fill")
-                            .foregroundColor(.green)
-                        Text("Photo")
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.white)
+                            .font(.system(size: 18))
+                        Text("Add Photos")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
                     }
                     .font(.subheadline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.green)
+                    )
                 }
                 
                 Button(action: {
                     showVideoPicker = true
                 }) {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "video.fill")
-                            .foregroundColor(.red)
-                        Text("Video")
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundColor(.white)
+                            .font(.system(size: 18))
+                        Text("Add Videos")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
                     }
                     .font(.subheadline)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color(.systemGray6))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.red)
+                    )
                 }
             }
             
@@ -423,14 +639,22 @@ struct CreatePostView: View {
     }
     
     private var selectedMediaPreview: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Selected Media")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Selected Media")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                Text("\(viewModel.state.selectedImages.count + viewModel.state.selectedVideos.count) items")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 16) {
                     // Images
                     ForEach(Array(viewModel.state.selectedImages.enumerated()), id: \.offset) { index, image in
                         MediaPreviewItem(
@@ -438,7 +662,9 @@ struct CreatePostView: View {
                             videoURL: nil,
                             type: .image,
                             onRemove: {
-                                viewModel.removeImage(at: index)
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.removeImage(at: index)
+                                }
                             }
                         )
                     }
@@ -450,7 +676,9 @@ struct CreatePostView: View {
                             videoURL: videoURL,
                             type: .video,
                             onRemove: {
-                                viewModel.removeVideo(at: index)
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.removeVideo(at: index)
+                                }
                             }
                         )
                     }
@@ -458,40 +686,71 @@ struct CreatePostView: View {
                 .padding(.horizontal, 4)
             }
         }
+        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
     }
     
     // MARK: - Recommendation Section
     
     private var recommendationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recommended *")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Recommendation")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("*")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                
+                Spacer()
+            }
             
-            HStack(spacing: 24) {
+            HStack(spacing: 16) {
                 ForEach(RecommendationType.allCases, id: \.self) { type in
                     Button(action: {
-                        viewModel.state.recommended = type.rawValue
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.state.recommended = type.rawValue
+                        }
                     }) {
-                        VStack(spacing: 8) {
+                        VStack(spacing: 12) {
                             Image(type.iconName)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 40, height: 40)
+                                .frame(width: 48, height: 48)
                             
                             Text(type.displayName)
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(.primary)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(viewModel.state.recommended == type.rawValue ? .white : .primary)
                         }
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .padding(.horizontal, 12)
                         .background(
-                            viewModel.state.recommended == type.rawValue ?
-                            type.color.opacity(0.2) : Color(.systemGray6)
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(
+                                    viewModel.state.recommended == type.rawValue ?
+                                    type.color : Color(.systemBackground)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(
+                                            viewModel.state.recommended == type.rawValue ?
+                                            type.color : Color(.systemGray4),
+                                            lineWidth: viewModel.state.recommended == type.rawValue ? 2 : 1
+                                        )
+                                )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .scaleEffect(viewModel.state.recommended == type.rawValue ? 1.05 : 1.0)
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.state.recommended)
                     }
                 }
             }
@@ -501,20 +760,38 @@ struct CreatePostView: View {
     // MARK: - Rating Section
     
     private var ratingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Rating *")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Rating")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text("*")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                
+                Spacer()
+                
+                Text("\(viewModel.state.rating)/5")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.dynamicAccent)
+            }
             
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 ForEach(1...5, id: \.self) { index in
                     Button(action: {
-                        viewModel.state.rating = index
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.state.rating = index
+                        }
                     }) {
                         Image(systemName: index <= viewModel.state.rating ? "star.fill" : "star")
-                            .font(.title2)
+                            .font(.title)
                             .foregroundColor(index <= viewModel.state.rating ? .yellow : .gray)
+                            .scaleEffect(index <= viewModel.state.rating ? 1.2 : 1.0)
+                            .animation(.easeInOut(duration: 0.2), value: viewModel.state.rating)
                     }
                 }
                 
@@ -526,64 +803,94 @@ struct CreatePostView: View {
     // MARK: - Price Section
     
     private var priceSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Add price (in $)...")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Price (Optional)")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
             
             HStack {
                 Text("$")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.dynamicAccent)
+                    .padding(.leading, 4)
                 
                 TextField("0.00", text: $viewModel.state.price)
                     .keyboardType(.decimalPad)
                     .textFieldStyle(PlainTextFieldStyle())
                     .font(.body)
+                    .fontWeight(.medium)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                viewModel.state.price.isEmpty ? Color(.systemGray4) : Color.dynamicAccent,
+                                lineWidth: 1
+                            )
+                    )
+            )
         }
     }
     
     // MARK: - Action Buttons View
     
     private var actionButtonsView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             // Create Post Button
             Button(action: {
                 Task {
                     await viewModel.createPost()
                 }
             }) {
-                HStack {
+                HStack(spacing: 12) {
                     if viewModel.isCreatingPost {
                         ProgressView()
-                            .scaleEffect(0.8)
+                            .scaleEffect(0.9)
                             .foregroundColor(.white)
                     } else {
                         Image(systemName: "plus.circle.fill")
                             .foregroundColor(.white)
+                            .font(.title3)
                     }
                     
-                    Text(viewModel.isCreatingPost ? "Creating..." : "Create Post")
-                        .fontWeight(.semibold)
+                    Text(viewModel.isCreatingPost ? "Creating Post..." : "Create Post")
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
+                        .font(.headline)
                 }
-                .font(.subheadline)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(viewModel.canCreatePost ? Color.dynamicAccent : Color(.systemGray4))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(viewModel.canCreatePost ? Color.dynamicAccent : Color(.systemGray4))
+                        .shadow(
+                            color: viewModel.canCreatePost ? Color.dynamicAccent.opacity(0.3) : Color.clear,
+                            radius: 8,
+                            x: 0,
+                            y: 4
+                        )
+                )
+                .scaleEffect(viewModel.canCreatePost ? 1.0 : 0.98)
+                .animation(.easeInOut(duration: 0.2), value: viewModel.canCreatePost)
             }
             .disabled(!viewModel.canCreatePost)
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 34)
-        .background(Color(.systemBackground))
+        .background(
+            Color(.systemBackground)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
+        )
     }
 }
 
@@ -596,11 +903,22 @@ struct CategoryDropdown<T: Identifiable & Codable & Hashable>: View {
     let onSelect: (T) -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                if title == "Category" {
+                    Text("*")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.red)
+                }
+                
+                Spacer()
+            }
             
             Menu {
                 ForEach(items, id: \.id) { item in
@@ -609,29 +927,61 @@ struct CategoryDropdown<T: Identifiable & Codable & Hashable>: View {
                     }) {
                         HStack {
                             Text(itemName(item))
+                                .font(.body)
                             if selectedItem?.id == item.id {
+                                Spacer()
                                 Image(systemName: "checkmark")
+                                    .foregroundColor(.dynamicAccent)
                             }
                         }
                     }
                 }
             } label: {
                 HStack {
+                    Image(systemName: dropdownIcon)
+                        .foregroundColor(.dynamicAccent)
+                        .font(.system(size: 16))
+                    
                     Text(selectedItem != nil ? itemName(selectedItem!) : "Select \(title)")
                         .foregroundColor(selectedItem != nil ? .primary : .secondary)
                         .font(.body)
+                        .fontWeight(selectedItem != nil ? .medium : .regular)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.down")
                         .foregroundColor(.secondary)
                         .font(.system(size: 14))
+                        .rotationEffect(.degrees(0))
+                        .animation(.easeInOut(duration: 0.2), value: selectedItem?.id)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    selectedItem != nil ? Color.dynamicAccent : Color(.systemGray4),
+                                    lineWidth: selectedItem != nil ? 1.5 : 1
+                                )
+                        )
+                )
             }
+        }
+    }
+    
+    private var dropdownIcon: String {
+        switch title {
+        case "Category":
+            return "folder.fill"
+        case "Subcategory":
+            return "folder.badge.plus"
+        case "Brand":
+            return "tag.fill"
+        default:
+            return "list.bullet"
         }
     }
     
@@ -654,11 +1004,15 @@ struct ProductDropdown: View {
     let onSelect: (ProductListItem) -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
             
             Menu {
                 ForEach(items, id: \.id) { item in
@@ -667,28 +1021,47 @@ struct ProductDropdown: View {
                     }) {
                         HStack {
                             Text(item.name)
+                                .font(.body)
                             if selectedItem?.id == item.id {
+                                Spacer()
                                 Image(systemName: "checkmark")
+                                    .foregroundColor(.dynamicAccent)
                             }
                         }
                     }
                 }
             } label: {
                 HStack {
+                    Image(systemName: "cube.fill")
+                        .foregroundColor(.dynamicAccent)
+                        .font(.system(size: 16))
+                    
                     Text(selectedItem?.name ?? "Select \(title)")
                         .foregroundColor(selectedItem != nil ? .primary : .secondary)
                         .font(.body)
+                        .fontWeight(selectedItem != nil ? .medium : .regular)
                     
                     Spacer()
                     
                     Image(systemName: "chevron.down")
                         .foregroundColor(.secondary)
                         .font(.system(size: 14))
+                        .rotationEffect(.degrees(0))
+                        .animation(.easeInOut(duration: 0.2), value: selectedItem?.id)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    selectedItem != nil ? Color.dynamicAccent : Color(.systemGray4),
+                                    lineWidth: selectedItem != nil ? 1.5 : 1
+                                )
+                        )
+                )
             }
         }
     }
@@ -702,19 +1075,26 @@ struct CustomCategoryRow: View {
         HStack {
             Text(title)
                 .font(.subheadline)
-                .fontWeight(.medium)
+                .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
             Spacer()
             
             Text(value)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .fontWeight(.medium)
+                .foregroundColor(.dynamicAccent)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -739,26 +1119,34 @@ struct MediaPreviewItem: View {
                     Rectangle()
                         .fill(Color(.systemGray5))
                         .overlay(
-                            VStack {
+                            VStack(spacing: 4) {
                                 Image(systemName: "play.circle.fill")
-                                    .font(.title)
+                                    .font(.title2)
                                     .foregroundColor(.white)
                                 Text("Video")
-                                    .font(.caption)
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
                                     .foregroundColor(.white)
                             }
                         )
                 }
             }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(width: 100, height: 100)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.systemGray4), lineWidth: 1)
+            )
             
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title3)
+                    .font(.title2)
                     .foregroundColor(.white)
-                    .background(Color.black.opacity(0.6))
-                    .clipShape(Circle())
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.7))
+                            .frame(width: 24, height: 24)
+                    )
             }
             .offset(x: 8, y: -8)
         }
