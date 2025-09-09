@@ -7,6 +7,7 @@ struct LatestReviewsView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var isHeaderVisible = true
     @State private var lastScrollOffset: CGFloat = 0
+    @State private var headerOffset: CGFloat = 0
     @State private var showingFullScreenMedia = false
     @State private var selectedMediaIndex = 0
     @State private var selectedMediaURLs: [String] = []
@@ -109,22 +110,18 @@ struct LatestReviewsView: View {
     
     // MARK: - Scroll Handling
     private func handleScrollOffset(_ offset: CGFloat) {
-       // print("Scroll offset: \(offset)") // Debug print
-        
         let scrollDelta = offset - lastScrollOffset
         lastScrollOffset = offset
         
-        let threshold: CGFloat = 10
+        let threshold: CGFloat = 15
         
         if scrollDelta < -threshold && isHeaderVisible {
-        //    print("Hiding header - scrolling down") // Debug print
-            // Scrolling down - hide header
+            // Scrolling down → hide header
             withAnimation(.easeInOut(duration: 0.3)) {
                 isHeaderVisible = false
             }
         } else if scrollDelta > threshold && !isHeaderVisible {
-         //   print("Showing header - scrolling up") // Debug print
-            // Scrolling up - show header
+            // Scrolling up → show header
             withAnimation(.easeInOut(duration: 0.3)) {
                 isHeaderVisible = true
             }
