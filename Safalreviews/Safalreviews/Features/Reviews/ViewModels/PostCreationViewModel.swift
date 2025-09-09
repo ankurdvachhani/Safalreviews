@@ -220,11 +220,13 @@ class PostCreationViewModel: ObservableObject {
     }
     
     func addVideo(_ videoURL: URL) {
+        print("🎥 Adding video to viewModel: \(videoURL)")
         guard state.selectedVideos.count < 5 else {
             errorMessage = "Maximum 5 videos allowed"
             return
         }
         state.selectedVideos.append(videoURL)
+        print("🎥 Video added successfully. Total videos: \(state.selectedVideos.count)")
     }
     
     func removeVideo(at index: Int) {
@@ -332,8 +334,25 @@ class PostCreationViewModel: ObservableObject {
     
     // MARK: - Media Upload
     
+    func resizedImage(_ image: UIImage, maxWidth: CGFloat = 1080) -> UIImage {
+        let scale = maxWidth / image.size.width
+        let newHeight = image.size.height * scale
+        let newSize = CGSize(width: maxWidth, height: newHeight)
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return resizedImage ?? image
+    }
+
+    
+    
     private func uploadImage(_ image: UIImage) async throws -> String? {
-        guard let imageData = image.jpegData(compressionQuality: 0.7) else {
+        // Usage:
+        let smallImage = resizedImage(image)
+        guard let imageData = smallImage.jpegData(compressionQuality: 0.2) else {
             throw NetworkError.invalidData
         }
         
@@ -435,6 +454,9 @@ class PostCreationViewModel: ObservableObject {
     }
     
     var hasSelectedMedia: Bool {
-        return !state.selectedImages.isEmpty || !state.selectedVideos.isEmpty
+        let hasImages = !state.selectedImages.isEmpty
+        let hasVideos = !state.selectedVideos.isEmpty
+        print("🎥 hasSelectedMedia check - Images: \(hasImages), Videos: \(hasVideos), Total: \(hasImages || hasVideos)")
+        return hasImages || hasVideos
     }
 }

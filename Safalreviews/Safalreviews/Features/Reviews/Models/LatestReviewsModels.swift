@@ -577,4 +577,13 @@ extension Post {
     }
 }
 
+// MARK: - Delete Post Response Model
+
+struct DeletePostResponse: Codable {
+    let success: Bool
+    let message: String
+    let errors: [String]?
+    let timestamp: String?
+}
+
 

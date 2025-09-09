@@ -9,6 +9,8 @@ class LatestReviewsViewModel: ObservableObject {
     @Published var successMessage: String?
     @Published var selectedCategoryType: CategoryType = .all
     @Published var searchText = ""
+    @Published var isMyPosts = false
+    @Published var currentUserId: String?
     
     private let networkManager = NetworkManager()
     private var currentPage = 1
@@ -24,6 +26,23 @@ class LatestReviewsViewModel: ObservableObject {
     init() {
         Task {
             await fetchLatestReviews()
+        }
+    }
+    
+    // MARK: - Configuration Methods
+    func configureForMyPosts(userId: String) {
+        isMyPosts = true
+        currentUserId = userId
+        Task {
+            await fetchLatestReviews(resetPages: true)
+        }
+    }
+    
+    func configureForAllPosts() {
+        isMyPosts = false
+        currentUserId = nil
+        Task {
+            await fetchLatestReviews(resetPages: true)
         }
     }
     
@@ -79,6 +98,11 @@ class LatestReviewsViewModel: ObservableObject {
                 URLQueryItem(name: "page", value: "\(currentPage)"),
                 URLQueryItem(name: "limit", value: "\(limit)")
             ]
+            
+            // Add user filter for "My Posts"
+            if isMyPosts, let userId = currentUserId {
+                queryItems.append(URLQueryItem(name: "userId", value: userId))
+            }
             
             // Add category type filter
             if selectedCategoryType != .all {
@@ -252,5 +276,38 @@ class LatestReviewsViewModel: ObservableObject {
     func commentOnPost(_ post: Post) {
         // TODO: Implement comment functionality
         print("💬 Commenting on post: \(post.id)")
+    }
+    
+    // MARK: - My Posts Methods
+    func deletePost(_ post: Post) async {
+        print("🗑️ Deleting post: \(post.id)")
+        
+        do {
+            let endpoint = Endpoint(
+                path: "/api/post/\(post.id)",
+                method: .delete
+            )
+            
+            let response: DeletePostResponse = try await networkManager.fetch(endpoint)
+            
+            if response.success {
+                // Remove the post from the local array
+                posts.removeAll { $0.id == post.id }
+                successMessage = "Post deleted successfully"
+                print("✅ Post deleted successfully")
+            } else {
+                errorMessage = "Failed to delete post"
+                print("❌ Failed to delete post: \(response.message)")
+            }
+            
+        } catch {
+            print("❌ Error deleting post: \(error)")
+            errorMessage = "Failed to delete post: \(error.localizedDescription)"
+        }
+    }
+    
+    func editPost(_ post: Post) {
+        // TODO: Implement edit functionality
+        print("✏️ Editing post: \(post.id)")
     }
 }

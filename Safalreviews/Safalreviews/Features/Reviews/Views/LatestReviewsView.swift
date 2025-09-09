@@ -13,6 +13,14 @@ struct LatestReviewsView: View {
     @State private var showingCommentSheet = false
     @State private var selectedPostForComments: Post?
     @State private var showingCreatePost = false
+    @State private var showingDeleteAlert = false
+    @State private var postToDelete: Post?
+    @State private var showingEditPost = false
+    @State private var postToEdit: Post?
+    
+    // Configuration properties
+    var isMyPosts: Bool = false
+    var userId: String? = nil
     
     var body: some View {
         NavigationView {
@@ -67,6 +75,36 @@ struct LatestReviewsView: View {
                 }
             })
         }
+        .sheet(isPresented: $showingEditPost) {
+            if let post = postToEdit {
+                // TODO: Create EditPostView
+                CreatePostView(onPostCreated: {
+                    Task {
+                        await viewModel.refreshPosts()
+                    }
+                })
+            }
+        }
+        .alert("Delete Post", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let post = postToDelete {
+                    Task {
+                        await viewModel.deletePost(post)
+                    }
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this post? This action cannot be undone.")
+        }
+        .onAppear {
+            // Configure view model based on parameters
+            if isMyPosts, let userId = userId {
+                viewModel.configureForMyPosts(userId: userId)
+            } else {
+                viewModel.configureForAllPosts()
+            }
+        }
     }
     
     // MARK: - Scroll Handling
@@ -103,7 +141,7 @@ struct LatestReviewsView: View {
                         .foregroundColor(.secondary)
                         .font(.system(size: 16, weight: .medium))
                     
-                    TextField("What's on your mind?", text: $searchText)
+                    TextField(isMyPosts ? "Search my posts..." : "What's on your mind?", text: $searchText)
                         .textFieldStyle(PlainTextFieldStyle())
                         .onChange(of: searchText) { newValue in
                             viewModel.searchPosts(query: newValue)
@@ -186,6 +224,7 @@ struct LatestReviewsView: View {
                     PostCardView(
                         post: post, 
                         viewModel: viewModel,
+                        isMyPosts: isMyPosts,
                         onMediaTap: { mediaURLs, selectedIndex in
                             selectedMediaURLs = mediaURLs
                             selectedMediaIndex = selectedIndex
@@ -194,6 +233,14 @@ struct LatestReviewsView: View {
                         onCommentTap: { post in
                             selectedPostForComments = post
                             showingCommentSheet = true
+                        },
+                        onEditTap: { post in
+                            postToEdit = post
+                            showingEditPost = true
+                        },
+                        onDeleteTap: { post in
+                            postToDelete = post
+                            showingDeleteAlert = true
                         }
                     )
                     .onAppear {
@@ -255,38 +302,56 @@ struct LatestReviewsView: View {
     // MARK: - Empty State View
     private var emptyStateView: some View {
         VStack(spacing: 24) {
-            Image(systemName: "doc.text.magnifyingglass")
+            Image(systemName: isMyPosts ? "person.circle" : "doc.text.magnifyingglass")
                 .font(.system(size: 60))
                 .foregroundColor(Color.dynamicAccent.opacity(0.6))
             
             VStack(spacing: 8) {
-                Text("No Posts Found")
+                Text(isMyPosts ? "No Posts Yet" : "No Posts Found")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                 
-                Text("No posts available for the selected category")
+                Text(isMyPosts ? "You haven't created any posts yet. Start sharing your reviews!" : "No posts available for the selected category")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
             
-            Button {
-                Task {
-                    await viewModel.refreshPosts()
+            if isMyPosts {
+                Button {
+                    showingCreatePost = true
+                } label: {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Create Your First Post")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.dynamicAccent)
+                    .clipShape(RoundedRectangle(cornerRadius: 25))
                 }
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Refresh")
+            } else {
+                Button {
+                    Task {
+                        await viewModel.refreshPosts()
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Refresh")
+                    }
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.dynamicAccent)
+                    .clipShape(RoundedRectangle(cornerRadius: 25))
                 }
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.dynamicAccent)
-                .clipShape(RoundedRectangle(cornerRadius: 25))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -318,8 +383,11 @@ struct CategoryFilterButton: View {
 struct PostCardView: View {
     let post: Post
     let viewModel: LatestReviewsViewModel
+    let isMyPosts: Bool
     let onMediaTap: ([String], Int) -> Void
     let onCommentTap: (Post) -> Void
+    let onEditTap: (Post) -> Void
+    let onDeleteTap: (Post) -> Void
     @State private var isDescriptionExpanded = false
     
     var body: some View {
@@ -342,6 +410,11 @@ struct PostCardView: View {
             
             // Author and date
             authorSection
+            
+            // Edit/Delete buttons for My Posts
+            if isMyPosts {
+                myPostsActionSection
+            }
             
             // Images/Videos
             mediaSection
@@ -496,6 +569,48 @@ struct PostCardView: View {
             
             Spacer()
         }
+    }
+    
+    // MARK: - My Posts Action Section
+    private var myPostsActionSection: some View {
+        HStack(spacing: 12) {
+            Button(action: {
+                onEditTap(post)
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14))
+                    Text("Edit")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            
+            Button(action: {
+                onDeleteTap(post)
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                    Text("Delete")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.red)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 8)
     }
     
     // MARK: - Media Section

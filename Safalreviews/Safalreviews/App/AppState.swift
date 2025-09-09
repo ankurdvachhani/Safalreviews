@@ -68,7 +68,7 @@ extension AppState {
         case settings
         case IncidentList
         case reviews
-        
+        case myposts
         var title: String {
             switch self {
             case .PatientList: return "Patients"
@@ -77,6 +77,8 @@ extension AppState {
             case .IncidentList: return "IncidentList"
             case .settings: return "Settings"
             case .reviews: return "Reviews"
+            case .myposts: return "My Posts"
+                
             }
         }
         
@@ -88,6 +90,7 @@ extension AppState {
             case .IncidentList:return "note.text.badge.plus"
             case .settings: return "gear"
             case .reviews: return "star"
+            case .myposts: return "star"
             }
         }
     }

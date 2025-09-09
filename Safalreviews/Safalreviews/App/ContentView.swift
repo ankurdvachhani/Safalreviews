@@ -165,6 +165,17 @@ struct ContentView: View {
                         Text("Latest Reviews")
                     }
                 
+                
+                LatestReviewsView(
+                    isMyPosts: true,
+                    userId: TokenManager.shared.getUserId()
+                )
+                    .tag(AppState.Tab.myposts)
+                    .tabItem {
+                        Image(systemName: "person.circle")
+                        Text("My Posts")
+                    }
+                
 //
 //                
 //                if TokenManager.shared.loadCurrentUser()?.role != "Patient" {

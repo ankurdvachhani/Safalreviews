@@ -83,7 +83,8 @@ struct CreatePostView: View {
             isPresented: $showVideoPicker,
             selection: $selectedVideoItems,
             maxSelectionCount: 5,
-            matching: .videos
+            matching: .videos,
+            photoLibrary: .shared()
         )
         .sheet(isPresented: $showImageCamera) {
             ImagePicker(sourceType: .camera) { image in
@@ -137,10 +138,22 @@ struct CreatePostView: View {
             }
         }
         .onChange(of: selectedVideoItems) { items in
+            print("🎥 Video items changed: \(items.count) items")
             Task {
                 for item in items {
+                    print("🎥 Processing video item...")
+                    // Try different approaches to load the video
                     if let url = try? await item.loadTransferable(type: URL.self) {
+                        print("🎥 Video URL loaded: \(url)")
                         viewModel.addVideo(url)
+                    } else if let data = try? await item.loadTransferable(type: Data.self) {
+                        print("🎥 Video data loaded, creating temporary URL")
+                        // Create a temporary file URL
+                        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("temp_video_\(UUID().uuidString).mp4")
+                        try? data.write(to: tempURL)
+                        viewModel.addVideo(tempURL)
+                    } else {
+                        print("🎥 Failed to load video URL or data")
                     }
                 }
                 selectedVideoItems = []
