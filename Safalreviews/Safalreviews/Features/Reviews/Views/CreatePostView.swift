@@ -7,6 +7,10 @@ struct CreatePostView: View {
     @Environment(\.dismiss) private var dismiss
     var onPostCreated: (() -> Void)?
     
+    // Edit mode properties
+    var postToEdit: Post? = nil
+    var isEditMode: Bool { postToEdit != nil }
+    
     @State private var showImagePicker = false
     @State private var showVideoPicker = false
     @State private var showDocumentPicker = false
@@ -168,6 +172,11 @@ struct CreatePostView: View {
                     onPostCreated?()
                 }
             }
+            
+            // Populate form if in edit mode
+            if isEditMode, let post = postToEdit {
+                viewModel.populateForEditing(post: post)
+            }
         }
     }
     
@@ -235,7 +244,7 @@ struct CreatePostView: View {
             
             Spacer()
             
-            Text("Create Post")
+            Text(isEditMode ? "Edit Post" : "Create Post")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -908,10 +917,14 @@ struct CreatePostView: View {
     
     private var actionButtonsView: some View {
         VStack(spacing: 16) {
-            // Create Post Button
+            // Create/Update Post Button
             Button(action: {
                 Task {
-                    await viewModel.createPost()
+                    if isEditMode, let post = postToEdit {
+                        await viewModel.editPost(postId: post.id)
+                    } else {
+                        await viewModel.createPost()
+                    }
                 }
             }) {
                 HStack(spacing: 12) {
@@ -920,12 +933,14 @@ struct CreatePostView: View {
                             .scaleEffect(0.9)
                             .foregroundColor(.white)
                     } else {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: isEditMode ? "checkmark.circle.fill" : "plus.circle.fill")
                             .foregroundColor(.white)
                             .font(.title3)
                     }
                     
-                    Text(viewModel.isCreatingPost ? "Creating Post..." : "Create Post")
+                    Text(viewModel.isCreatingPost ? 
+                         (isEditMode ? "Updating Post..." : "Creating Post...") : 
+                         (isEditMode ? "Update Post" : "Create Post"))
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .font(.headline)

@@ -300,12 +300,26 @@ class CommentViewModel: ObservableObject {
         selectedImages.removeAll()
     }
     
+    func resizedImage(_ image: UIImage, maxWidth: CGFloat = 1080) -> UIImage {
+          let scale = maxWidth / image.size.width
+          let newHeight = image.size.height * scale
+          let newSize = CGSize(width: maxWidth, height: newHeight)
+          
+          UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+          image.draw(in: CGRect(origin: .zero, size: newSize))
+          let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+          UIGraphicsEndImageContext()
+          
+          return resizedImage ?? image
+      }
+    
     // MARK: - Private Methods
     
     private func uploadCommentImage(_ image: UIImage) async throws -> String? {
-        guard let imageData = image.jpegData(compressionQuality: 0.4) else {
-            throw NetworkError.invalidData
-        }
+        let smallImage = resizedImage(image)
+               guard let imageData = smallImage.jpegData(compressionQuality: 0.2) else {
+                   throw NetworkError.invalidData
+               }
         
         let timestamp = Int(Date().timeIntervalSince1970)
         let uniqueFileName = "comment_image_\(timestamp).jpg"

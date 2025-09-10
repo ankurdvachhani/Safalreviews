@@ -332,6 +332,246 @@ class PostCreationViewModel: ObservableObject {
         isCreatingPost = false
     }
     
+    // MARK: - Post Editing
+    
+    func populateForEditing(post: Post) {
+        // Clear existing data
+        clearForm()
+        
+        // Populate with post data
+        state.title = post.title
+        state.description = post.description.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        state.categoryType = post.categoryType.capitalized
+        state.recommended = post.recommended
+        state.rating = post.rating
+        state.price = post.price?.description ?? ""
+        
+        // Set category selections if available
+        if let category = post.category {
+            // Create a Category with required fields
+            let categoryData = """
+            {
+                "_id": "\(category.id)",
+                "name": "\(category.name)",
+                "slug": "\(category.slug)",
+                "isActive": true,
+                "categoryType": "\(post.categoryType.lowercased())",
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "updatedAt": "2024-01-01T00:00:00.000Z"
+            }
+            """.data(using: .utf8)!
+            
+            if let decodedCategory = try? JSONDecoder().decode(Category.self, from: categoryData) {
+                state.selectedCategory = decodedCategory
+            }
+        }
+        
+        if let subcategory = post.subcategory {
+            // Create a Subcategory with required fields
+            let subcategoryData = """
+            {
+                "_id": "\(subcategory.id)",
+                "name": "\(subcategory.name)",
+                "slug": "\(subcategory.slug)",
+                "category": {
+                    "_id": "\(post.category?.id ?? "")",
+                    "name": "\(post.category?.name ?? "")",
+                    "slug": "\(post.category?.slug ?? "")"
+                },
+                "isActive": true,
+                "categoryType": "\(post.categoryType.lowercased())",
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "updatedAt": "2024-01-01T00:00:00.000Z"
+            }
+            """.data(using: .utf8)!
+            
+            if let decodedSubcategory = try? JSONDecoder().decode(Subcategory.self, from: subcategoryData) {
+                state.selectedSubcategory = decodedSubcategory
+            }
+        }
+        
+        if let brand = post.brand {
+            // Create a Brand with required fields
+            let brandData = """
+            {
+                "_id": "\(brand.id)",
+                "name": "\(brand.name)",
+                "slug": "\(brand.slug)",
+                "subCategory": {
+                    "_id": "\(post.subcategory?.id ?? "")",
+                    "name": "\(post.subcategory?.name ?? "")",
+                    "slug": "\(post.subcategory?.slug ?? "")",
+                    "category": {
+                        "_id": "\(post.category?.id ?? "")",
+                        "name": "\(post.category?.name ?? "")",
+                        "slug": "\(post.category?.slug ?? "")"
+                    }
+                },
+                "isActive": true,
+                "categoryType": "\(post.categoryType.lowercased())",
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "updatedAt": "2024-01-01T00:00:00.000Z"
+            }
+            """.data(using: .utf8)!
+            
+            if let decodedBrand = try? JSONDecoder().decode(Brand.self, from: brandData) {
+                state.selectedBrand = decodedBrand
+            }
+        }
+        
+        if let product = post.product {
+            // Create a ProductListItem with required fields
+            let productData = """
+            {
+                "_id": "\(product.id)",
+                "name": "\(product.name)",
+                "description": "",
+                "media": [],
+                "category": "\(post.category?.id ?? "")",
+                "subCategory": "\(post.subcategory?.id ?? "")",
+                "specifications": {},
+                "isActive": true,
+                "slug": "\(product.slug)",
+                "createdAt": "2024-01-01T00:00:00.000Z",
+                "updatedAt": "2024-01-01T00:00:00.000Z",
+                "categoryType": "\(post.categoryType.lowercased())",
+                "brand": {
+                    "_id": "\(post.brand?.id ?? "")",
+                    "name": "\(post.brand?.name ?? "")",
+                    "slug": "\(post.brand?.slug ?? "")",
+                    "subCategory": {
+                        "_id": "\(post.subcategory?.id ?? "")",
+                        "name": "\(post.subcategory?.name ?? "")",
+                        "slug": "\(post.subcategory?.slug ?? "")",
+                        "category": {
+                            "_id": "\(post.category?.id ?? "")",
+                            "name": "\(post.category?.name ?? "")",
+                            "slug": "\(post.category?.slug ?? "")"
+                        }
+                    }
+                },
+                "averageRating": 0.0,
+                "totalRatings": 0,
+                "ratings": [],
+                "mediaSignedUrls": []
+            }
+            """.data(using: .utf8)!
+            
+            if let decodedProduct = try? JSONDecoder().decode(ProductListItem.self, from: productData) {
+                state.selectedProduct = decodedProduct
+            }
+        }
+        
+        // Check if using custom categories
+        if let customCategory = post.customCategory, !customCategory.isEmpty {
+            state.isUsingCustomCategory = true
+            state.customCategory = customCategory
+            state.customSubCategory = post.customSubCategory ?? ""
+            state.customBrand = post.customBrand ?? ""
+            state.customProduct = post.customProduct ?? ""
+        }
+        
+        // Load existing media (images and videos)
+        // Note: This would require downloading and converting URLs to UIImage/URL objects
+        // For now, we'll start with empty media arrays
+        state.selectedImages = []
+        state.selectedVideos = []
+    }
+    
+    func editPost(postId: String) async {
+        guard state.isValid else {
+            errorMessage = "Please fill in all required fields"
+            return
+        }
+        
+        isCreatingPost = true
+        errorMessage = nil
+        
+        do {
+            // Upload new images first
+            var uploadedImageURLs: [String] = []
+            for image in state.selectedImages {
+                if let imageURL = try await uploadImage(image) {
+                    uploadedImageURLs.append(imageURL)
+                }
+            }
+            
+            // Upload new videos
+            var uploadedVideoURLs: [String] = []
+            for videoURL in state.selectedVideos {
+                if let videoURLString = try await uploadVideo(videoURL) {
+                    uploadedVideoURLs.append(videoURLString)
+                }
+            }
+            
+            // Create edit post request
+            let request = EditPostRequest(
+                title: state.title.trimmingCharacters(in: .whitespacesAndNewlines),
+                description: state.description.trimmingCharacters(in: .whitespacesAndNewlines),
+                categoryType: state.categoryType.lowercased(),
+                category: state.isUsingCustomCategory ? nil : state.selectedCategory?.id,
+                subcategory: state.isUsingCustomCategory ? nil : state.selectedSubcategory?.id,
+                brand: state.isUsingCustomCategory ? nil : state.selectedBrand?.id,
+                product: state.isUsingCustomCategory ? nil : state.selectedProduct?.id,
+                customCategory: state.isUsingCustomCategory ? state.customCategory : "",
+                customSubCategory: state.isUsingCustomCategory ? state.customSubCategory : "",
+                customBrand: state.isUsingCustomCategory ? state.customBrand : "",
+                customProduct: state.isUsingCustomCategory ? state.customProduct : "",
+                recommended: state.recommended,
+                rating: state.rating,
+                imgs: uploadedImageURLs,
+                videos: uploadedVideoURLs
+            )
+            
+            // Create the URL request
+            guard let url = URL(string: APIConfig.baseURL + "/api/post/\(postId)") else {
+                throw NetworkError.invalidURL
+            }
+            
+            var urlRequest = URLRequest(url: url)
+            urlRequest.httpMethod = "PUT"
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            urlRequest.setValue("access_token=\(TokenManager.shared.getToken() ?? "")", forHTTPHeaderField: "Cookie")
+            urlRequest.httpBody = try JSONEncoder().encode(request)
+            
+            // Log the request
+            NetworkLogger.log(request: urlRequest)
+            
+            let (data, response) = try await URLSession.shared.data(for: urlRequest)
+            
+            // Log the response
+            NetworkLogger.log(response: response, data: data, error: nil)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.invalidResponse
+            }
+            
+            if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+                let response = try JSONDecoder().decode(EditPostResponse.self, from: data)
+                
+                if response.success {
+                    successMessage = response.message ?? "Post updated successfully!"
+                    
+                    // Call the callback to notify parent view
+                    onPostCreated?()
+                } else {
+                    errorMessage = "Failed to update post"
+                }
+            } else {
+                throw NetworkError.apiError("Failed to update post: \(httpResponse.statusCode)")
+            }
+            
+        } catch let error as NetworkError {
+            print("Network error occurred: \(error.localizedDescription)")
+            errorMessage = error.localizedDescription
+        } catch {
+            print("Unexpected error occurred: \(error.localizedDescription)")
+            errorMessage = "An unexpected error occurred"
+        }
+        
+        isCreatingPost = false
+    }
+    
     // MARK: - Media Upload
     
     func resizedImage(_ image: UIImage, maxWidth: CGFloat = 1080) -> UIImage {

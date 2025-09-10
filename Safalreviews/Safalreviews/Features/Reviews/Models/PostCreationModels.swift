@@ -35,6 +35,39 @@ struct CreatePostResponse: Codable {
     let message: String?
 }
 
+// MARK: - Edit Post Request Models
+
+struct EditPostRequest: Codable {
+    let title: String
+    let description: String
+    let categoryType: String
+    let category: String?
+    let subcategory: String?
+    let brand: String?
+    let product: String?
+    let customCategory: String?
+    let customSubCategory: String?
+    let customBrand: String?
+    let customProduct: String?
+    let recommended: String
+    let rating: Int
+    let imgs: [String]
+    let videos: [String]
+    
+    enum CodingKeys: String, CodingKey {
+        case title, description, categoryType, category, subcategory
+        case brand, product, customCategory, customSubCategory, customBrand, customProduct
+        case recommended, rating, imgs, videos
+    }
+}
+
+struct EditPostResponse: Codable {
+    let success: Bool
+    let errors: [String]?
+    let timestamp: String?
+    let message: String?
+}
+
 struct CreatePostData: Codable {
     let id: String
     let title: String

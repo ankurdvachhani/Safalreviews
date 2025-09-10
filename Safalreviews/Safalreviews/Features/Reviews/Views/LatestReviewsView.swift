@@ -16,7 +16,6 @@ struct LatestReviewsView: View {
     @State private var showingCreatePost = false
     @State private var showingDeleteAlert = false
     @State private var postToDelete: Post?
-    @State private var showingEditPost = false
     @State private var postToEdit: Post?
     
     // Configuration properties
@@ -45,6 +44,8 @@ struct LatestReviewsView: View {
             .background(Color(.systemGroupedBackground))
             .animation(.easeInOut(duration: 0.3), value: isHeaderVisible)
         }
+        .toast(message: $viewModel.errorMessage, type: .error)
+        .toast(message: $viewModel.successMessage, type: .success)
         .navigationViewStyle(StackNavigationViewStyle())
         .fullScreenCover(isPresented: $showingFullScreenMedia) {
             FullScreenMediaView(
@@ -76,15 +77,15 @@ struct LatestReviewsView: View {
                 }
             })
         }
-        .sheet(isPresented: $showingEditPost) {
-            if let post = postToEdit {
-                // TODO: Create EditPostView
-                CreatePostView(onPostCreated: {
+        .sheet(item: $postToEdit) { post in
+            CreatePostView(
+                onPostCreated: {
                     Task {
                         await viewModel.refreshPosts()
                     }
-                })
-            }
+                },
+                postToEdit: post
+            )
         }
         .alert("Delete Post", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -118,12 +119,12 @@ struct LatestReviewsView: View {
         if scrollDelta < -threshold && isHeaderVisible {
             // Scrolling down → hide header
             withAnimation(.easeInOut(duration: 0.3)) {
-                isHeaderVisible = false
+               // isHeaderVisible = false
             }
         } else if scrollDelta > threshold && !isHeaderVisible {
             // Scrolling up → show header
             withAnimation(.easeInOut(duration: 0.3)) {
-                isHeaderVisible = true
+             //  isHeaderVisible = true
             }
         }
     }
@@ -233,7 +234,6 @@ struct LatestReviewsView: View {
                         },
                         onEditTap: { post in
                             postToEdit = post
-                            showingEditPost = true
                         },
                         onDeleteTap: { post in
                             postToDelete = post
