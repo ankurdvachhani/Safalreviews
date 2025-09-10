@@ -218,7 +218,7 @@ struct ProductDetailView: View {
                 }
                 
                 Text("(\(productDetail.totalRatings) reviews)")
-                    .font(.title3)
+                    .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundColor(.secondary)
                 
@@ -352,7 +352,7 @@ struct ProductDetailView: View {
         VStack(alignment: .leading, spacing: 24) {
             // Section Header
             HStack {
-                Text("Customer Reviews (\(productDetail.totalRatings))")
+                Text("Customer Reviews (\(viewModel.totalReviewsCount))")
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
@@ -564,6 +564,7 @@ struct ReviewCardView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
+                               
                         } placeholder: {
                             Rectangle()
                                 .fill(Color(.systemGray5))
@@ -1443,66 +1444,75 @@ struct ProductDetailZoomableImageView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            AsyncImage(url: URL(string: imageURL)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .gesture(
-                        SimultaneousGesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let delta = value / lastScale
-                                    lastScale = value
-                                    scale = min(max(scale * delta, 1), 4)
-                                }
-                                .onEnded { _ in
-                                    lastScale = 1.0
-                                    if scale < 1 {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                            scale = 1
-                                            offset = .zero
+            ZStack {
+                Color.black
+                    .ignoresSafeArea()
+                
+                AsyncImage(url: URL(string: imageURL)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .scaleEffect(scale)
+                        .offset(offset)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .gesture(
+                            SimultaneousGesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        let delta = value / lastScale
+                                        lastScale = value
+                                        scale = min(max(scale * delta, 1), 4)
+                                    }
+                                    .onEnded { _ in
+                                        lastScale = 1.0
+                                        if scale < 1 {
+                                            withAnimation(.easeOut(duration: 0.3)) {
+                                                scale = 1
+                                                offset = .zero
+                                            }
+                                        }
+                                    },
+                                DragGesture()
+                                    .onChanged { value in
+                                        if scale > 1 {
+                                            offset = CGSize(
+                                                width: lastOffset.width + value.translation.width,
+                                                height: lastOffset.height + value.translation.height
+                                            )
                                         }
                                     }
-                                },
-                            DragGesture()
-                                .onChanged { value in
-                                    if scale > 1 {
-                                        offset = CGSize(
-                                            width: lastOffset.width + value.translation.width,
-                                            height: lastOffset.height + value.translation.height
-                                        )
-                                    }
-                                }
-                                .onEnded { _ in
-                                    lastOffset = offset
-                                    if scale <= 1 {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                            offset = .zero
+                                    .onEnded { _ in
+                                        lastOffset = offset
+                                        if scale <= 1 {
+                                            withAnimation(.easeOut(duration: 0.3)) {
+                                                offset = .zero
+                                            }
                                         }
                                     }
-                                }
+                            )
                         )
-                    )
-                    .onTapGesture(count: 2) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            if scale > 1 {
-                                scale = 1
-                                offset = .zero
-                                lastOffset = .zero
-                            } else {
-                                scale = 2
+                        .onTapGesture(count: 2) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if scale > 1 {
+                                    scale = 1
+                                    offset = .zero
+                                    lastOffset = .zero
+                                } else {
+                                    scale = 2
+                                }
                             }
                         }
+                } placeholder: {
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .foregroundColor(.white)
+                        Spacer()
                     }
-            } placeholder: {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .foregroundColor(.white)
+                }
             }
         }
-        .background(Color.black)
     }
 }
 

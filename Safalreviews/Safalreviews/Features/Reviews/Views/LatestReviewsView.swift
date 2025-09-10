@@ -406,9 +406,9 @@ struct PostCardView: View {
             authorSection
             
             // Edit/Delete buttons for My Posts
-            if isMyPosts {
-                myPostsActionSection
-            }
+//            if isMyPosts {
+//                myPostsActionSection
+//            }
             
             // Images/Videos
             mediaSection
@@ -569,7 +569,7 @@ struct PostCardView: View {
     private var myPostsActionSection: some View {
         HStack(spacing: 12) {
             Button(action: {
-                onEditTap(post)
+              //  onEditTap(post)
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "pencil")
@@ -586,7 +586,7 @@ struct PostCardView: View {
             }
             
             Button(action: {
-                onDeleteTap(post)
+               // onDeleteTap(post)
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "trash")
@@ -840,65 +840,73 @@ struct ZoomableImageView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            AsyncImage(url: URL(string: imageURL)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .gesture(
-                        SimultaneousGesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let delta = value / lastScale
-                                    lastScale = value
-                                    scale = min(max(scale * delta, 1), 4)
-                                }
-                                .onEnded { _ in
-                                    lastScale = 1.0
-                                    if scale < 1 {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                            scale = 1
-                                            offset = .zero
+            ZStack {
+                AsyncImage(url: URL(string: imageURL)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .scaleEffect(scale)
+                        .offset(offset)
+                        .frame(
+                            width: geometry.size.width,
+                            height: geometry.size.height,
+                            alignment: .center
+                        ) // 🔑 keeps image centered
+                        .gesture(
+                            SimultaneousGesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        let delta = value / lastScale
+                                        lastScale = value
+                                        scale = min(max(scale * delta, 1), 4)
+                                    }
+                                    .onEnded { _ in
+                                        lastScale = 1.0
+                                        if scale < 1 {
+                                            withAnimation(.easeOut(duration: 0.3)) {
+                                                scale = 1
+                                                offset = .zero
+                                            }
+                                        }
+                                    },
+                                DragGesture()
+                                    .onChanged { value in
+                                        if scale > 1 {
+                                            offset = CGSize(
+                                                width: lastOffset.width + value.translation.width,
+                                                height: lastOffset.height + value.translation.height
+                                            )
                                         }
                                     }
-                                },
-                            DragGesture()
-                                .onChanged { value in
-                                    if scale > 1 {
-                                        offset = CGSize(
-                                            width: lastOffset.width + value.translation.width,
-                                            height: lastOffset.height + value.translation.height
-                                        )
-                                    }
-                                }
-                                .onEnded { _ in
-                                    lastOffset = offset
-                                    if scale <= 1 {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                            offset = .zero
+                                    .onEnded { _ in
+                                        lastOffset = offset
+                                        if scale <= 1 {
+                                            withAnimation(.easeOut(duration: 0.3)) {
+                                                offset = .zero
+                                            }
                                         }
                                     }
-                                }
+                            )
                         )
-                    )
-                    .onTapGesture(count: 2) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            if scale > 1 {
-                                scale = 1
-                                offset = .zero
-                                lastOffset = .zero
-                            } else {
-                                scale = 2
+                        .onTapGesture(count: 2) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if scale > 1 {
+                                    scale = 1
+                                    offset = .zero
+                                    lastOffset = .zero
+                                } else {
+                                    scale = 2
+                                }
                             }
                         }
-                    }
-            } placeholder: {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .foregroundColor(.white)
+                } placeholder: {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .foregroundColor(.white)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // 🔑 centers inside available space
+            .background(Color.black)
         }
-        .background(Color.black)
     }
 }

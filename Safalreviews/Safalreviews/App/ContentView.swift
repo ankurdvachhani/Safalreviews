@@ -166,15 +166,15 @@ struct ContentView: View {
                     }
                 
                 
-//                LatestReviewsView(
-//                    isMyPosts: true,
-//                    userId: TokenManager.shared.getUserId()
-//                )
-//                    .tag(AppState.Tab.myposts)
-//                    .tabItem {
-//                        Image(systemName: "person.circle")
-//                        Text("My Posts")
-//                    }
+                LatestReviewsView(
+                    isMyPosts: true,
+                    userId: TokenManager.shared.getUserId()
+                )
+                    .tag(AppState.Tab.myposts)
+                    .tabItem {
+                        Image(systemName: "person.circle")
+                        Text("My Posts")
+                    }
                 
 //
 //                

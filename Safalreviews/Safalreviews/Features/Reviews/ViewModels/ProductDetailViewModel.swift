@@ -8,6 +8,7 @@ class ProductDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var successMessage: String?
+    @Published var totalReviewsCount = 0
     
     private let networkManager = NetworkManager()
     private var currentPage = 1
@@ -24,7 +25,7 @@ class ProductDetailViewModel: ObservableObject {
             
             // For now, we'll create a mock product detail from the first review
             // In a real app, you'd have a separate API endpoint for product details
-            let reviews = try await reviewsTask
+            let (reviews, totalCount) = try await reviewsTask
             
             if let firstReview = reviews.first {
                 let ratingBreakdown = calculateRatingBreakdown(from: reviews)
@@ -39,7 +40,7 @@ class ProductDetailViewModel: ObservableObject {
                     subcategory: firstReview.subcategory.name,
                     brand: firstReview.brand.name,
                     averageRating: averageRating,
-                    totalRatings: reviews.count,
+                    totalRatings: totalCount, // Use total count from API
                     ratingBreakdown: ratingBreakdown,
                     reviews: reviews
                 )
@@ -49,6 +50,7 @@ class ProductDetailViewModel: ObservableObject {
             }
             
             self.reviews = reviews
+            self.totalReviewsCount = totalCount
             currentPage = 1
             hasMorePages = reviews.count >= limit
             
@@ -68,7 +70,7 @@ class ProductDetailViewModel: ObservableObject {
         currentPage += 1
         
         do {
-            let newReviews = try await loadReviews(productId: productId, page: currentPage)
+            let (newReviews, totalCount) = try await loadReviews(productId: productId, page: currentPage)
             reviews.append(contentsOf: newReviews)
             hasMorePages = newReviews.count >= limit
             
@@ -87,7 +89,7 @@ class ProductDetailViewModel: ObservableObject {
                     subcategory: detail.subcategory,
                     brand: detail.brand,
                     averageRating: averageRating,
-                    totalRatings: allReviews.count,
+                    totalRatings: totalCount, // Use total count from API
                     ratingBreakdown: ratingBreakdown,
                     reviews: allReviews
                 )
@@ -101,12 +103,12 @@ class ProductDetailViewModel: ObservableObject {
         isLoading = false
     }
     
-    private func loadReviews(productId: String, page: Int) async throws -> [ReviewPost] {
+    private func loadReviews(productId: String, page: Int) async throws -> (reviews: [ReviewPost], totalCount: Int) {
         let endpoint = Endpoint.reviewPosts(productId: productId, page: page, limit: limit)
         
         let response: ReviewPostResponse = try await networkManager.fetch(endpoint)
         
-        return response.data
+        return (response.data, response.pagination.totalCount)
     }
     
     private func calculateRatingBreakdown(from reviews: [ReviewPost]) -> [Int: Int] {
