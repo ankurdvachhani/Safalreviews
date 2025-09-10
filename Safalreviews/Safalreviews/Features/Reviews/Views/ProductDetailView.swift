@@ -8,8 +8,8 @@ struct ProductDetailView: View {
     @State private var showingWriteReview = false
     @State private var currentImageIndex = 0
     @State private var timer: Timer?
-    @State private var showingCommentSheet = false
     @State private var selectedReviewForComments: ReviewPost?
+    @State private var showingFullScreenMedia: MediaPresentationData?
     
     var body: some View {
             ZStack {
@@ -34,27 +34,32 @@ struct ProductDetailView: View {
             }
             .navigationTitle("Product Details")
             .navigationBarTitleDisplayMode(.inline)
-            .toast(message: $viewModel.errorMessage, type: .error)
-            .toast(message: $viewModel.successMessage, type: .success)
+        .toast(message: $viewModel.errorMessage, type: .error)
+        .toast(message: $viewModel.successMessage, type: .success)
+        .fullScreenCover(item: $showingFullScreenMedia) { mediaData in
+            ProductDetailFullScreenMediaView(
+                mediaURLs: mediaData.mediaURLs,
+                initialIndex: mediaData.initialIndex,
+                isPresented: $showingFullScreenMedia
+            )
+        }
             .sheet(isPresented: $showingWriteReview) {
                 WriteReviewView(product: product)
             }
-            .sheet(isPresented: $showingCommentSheet) {
-                if let review = selectedReviewForComments {
-                    ReviewCommentSheet(
-                        review: review,
-                        onCommentAdded: {
-                            // Update the comment count for the selected review
-                            if let index = viewModel.reviews.firstIndex(where: { $0.id == review.id }) {
-                                // Add a mock comment to show the update
-                                // In a real app, you'd reload the review data
-                                print("Comment added to review: \(review.id)")
-                            }
+            .sheet(item: $selectedReviewForComments) { review in
+                ReviewCommentSheet(
+                    review: review,
+                    onCommentAdded: {
+                        // Update the comment count for the selected review
+                        if let index = viewModel.reviews.firstIndex(where: { $0.id == review.id }) {
+                            // Add a mock comment to show the update
+                            // In a real app, you'd reload the review data
+                            print("Comment added to review: \(review.id)")
                         }
-                    )
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-                }
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
         .task {
             await viewModel.loadProductDetail(productId: product.id)
@@ -367,7 +372,12 @@ struct ProductDetailView: View {
                             viewModel: viewModel,
                             onCommentTap: { selectedReview in
                                 selectedReviewForComments = selectedReview
-                                showingCommentSheet = true
+                            },
+                            onMediaTap: { mediaURLs, selectedIndex in
+                                showingFullScreenMedia = MediaPresentationData(
+                                    mediaURLs: mediaURLs,
+                                    initialIndex: selectedIndex
+                                )
                             }
                         )
                         .task {
@@ -503,6 +513,8 @@ struct ReviewCardView: View {
     let review: ReviewPost
     let viewModel: ProductDetailViewModel
     let onCommentTap: (ReviewPost) -> Void
+    let onMediaTap: ([String], Int) -> Void
+    @State private var isDescriptionExpanded = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -523,30 +535,75 @@ struct ReviewCardView: View {
                 .lineLimit(2)
             
             // Description
-            Text(review.cleanDescription)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .lineLimit(4)
-            
-            // Review Image (if any)
-            if let imageUrl = review.displayImage {
-                AsyncImage(url: URL(string: imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 140)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(.systemGray5))
-                        .frame(height: 140)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundColor(.secondary)
-                        )
+            VStack(alignment: .leading, spacing: 4) {
+                Text(review.cleanDescription)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(isDescriptionExpanded ? nil : 4)
+                    .multilineTextAlignment(.leading)
+                
+                if review.cleanDescription.count > 150 {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            isDescriptionExpanded.toggle()
+                        }
+                    }) {
+                        Text(isDescriptionExpanded ? "See less" : "See more")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(Color.dynamicAccent)
+                    }
                 }
+            }
+            
+            // Review Media (Images and Videos)
+            if !review.imgs.isEmpty || !review.videos.isEmpty {
+                TabView {
+                    ForEach(Array(review.imgs.enumerated()), id: \.element) { index, imageUrl in
+                        AsyncImage(url: URL(string: imageUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color(.systemGray5))
+                                .overlay(
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                )
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+                        .clipped()
+                        .onTapGesture {
+                            let allMedia = review.imgs + review.videos
+                            onMediaTap(allMedia, index)
+                        }
+                    }
+                    
+                    ForEach(Array(review.videos.enumerated()), id: \.element) { index, videoUrl in
+                        Rectangle()
+                            .fill(Color(.systemGray5))
+                            .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+                            .overlay(
+                                VStack {
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.white)
+                                    Text("Video")
+                                        .font(.caption)
+                                        .foregroundColor(.white)
+                                }
+                            )
+                            .onTapGesture {
+                                let allMedia = review.imgs + review.videos
+                                let videoIndex = review.imgs.count + index
+                                onMediaTap(allMedia, videoIndex)
+                            }
+                    }
+                }
+                .frame(maxWidth: .infinity, minHeight: 200, maxHeight: 200)
+                .tabViewStyle(PageTabViewStyle())
+                .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
             }
             
             // Reviewer Info
@@ -1311,6 +1368,159 @@ struct ProductDetailCommentCameraPicker: UIViewControllerRepresentable {
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             parent.dismiss()
         }
+    }
+}
+
+// MARK: - Product Detail Full Screen Media View
+struct ProductDetailFullScreenMediaView: View {
+    let mediaURLs: [String]
+    let initialIndex: Int
+    @Binding var isPresented: MediaPresentationData?
+    @State private var currentIndex: Int
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    init(mediaURLs: [String], initialIndex: Int, isPresented: Binding<MediaPresentationData?>) {
+        self.mediaURLs = mediaURLs
+        self.initialIndex = initialIndex
+        self._isPresented = isPresented
+        self._currentIndex = State(initialValue: initialIndex)
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header with close button and counter
+                HStack {
+                    Button(action: {
+                        isPresented = nil
+                    }) {
+                        Image(systemName: "xmark")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(currentIndex + 1) of \(mediaURLs.count)")
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
+                    Spacer()
+                    
+                    // Placeholder for balance
+                    Color.clear
+                        .frame(width: 44, height: 44)
+                }
+                .padding()
+                
+                // Media content - centered
+                Spacer()
+                
+                TabView(selection: $currentIndex) {
+                    ForEach(Array(mediaURLs.enumerated()), id: \.element) { index, url in
+                        ProductDetailZoomableImageView(imageURL: url)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .onChange(of: currentIndex) { _ in
+                    // Reset zoom when changing images
+                    scale = 1.0
+                    lastScale = 1.0
+                    offset = .zero
+                    lastOffset = .zero
+                }
+                
+                Spacer()
+            }
+        }
+        .statusBarHidden()
+    }
+}
+
+// MARK: - Product Detail Zoomable Image View
+struct ProductDetailZoomableImageView: View {
+    let imageURL: String
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    
+    var body: some View {
+        GeometryReader { geometry in
+            AsyncImage(url: URL(string: imageURL)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .scaleEffect(scale)
+                    .offset(offset)
+                    .gesture(
+                        SimultaneousGesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    let delta = value / lastScale
+                                    lastScale = value
+                                    scale = min(max(scale * delta, 1), 4)
+                                }
+                                .onEnded { _ in
+                                    lastScale = 1.0
+                                    if scale < 1 {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                            scale = 1
+                                            offset = .zero
+                                        }
+                                    }
+                                },
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1 {
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                    if scale <= 1 {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                            offset = .zero
+                                        }
+                                    }
+                                }
+                        )
+                    )
+                    .onTapGesture(count: 2) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            if scale > 1 {
+                                scale = 1
+                                offset = .zero
+                                lastOffset = .zero
+                            } else {
+                                scale = 2
+                            }
+                        }
+                    }
+            } placeholder: {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .foregroundColor(.white)
+            }
+        }
+        .background(Color.black)
     }
 }
 
