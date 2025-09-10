@@ -478,6 +478,115 @@ class PostCreationViewModel: ObservableObject {
         state.selectedVideos = []
     }
     
+    func populateForProductReview(product: ProductReview) async {
+        // Clear existing data
+        clearForm()
+        
+        // Set category type from product
+        state.categoryType = product.categoryType.capitalized
+        
+        print("🔍 Populating for product review:")
+        print("   Product: \(product.name)")
+        print("   Category ID: \(product.category ?? "nil")")
+        print("   SubCategory ID: \(product.subCategory ?? "nil")")
+        print("   Brand: \(product.brand.name)")
+        print("   Brand ID: \(product.brand.id)")
+        
+        // Set a default title based on product name
+        state.title = "Review: \(product.name)"
+        
+        // Set default rating to 5 (user can change)
+        state.rating = 5
+        
+        // Set default recommendation to "safal" (user can change)
+        state.recommended = "safal"
+        
+        // Step 1: Fetch categories if not already loaded
+        if categories.isEmpty {
+            print("📡 Fetching categories...")
+            await fetchCategories()
+        }
+        print("   Available categories: \(categories.map { "\($0.name) (\($0.id))" })")
+        
+        // Step 2: Find and select category by ID
+        if let categoryId = product.category,
+           let matchingCategory = categories.first(where: { $0.id == categoryId }) {
+            state.selectedCategory = matchingCategory
+            print("✅ Found matching category: \(matchingCategory.name) (\(matchingCategory.id))")
+            
+            // Step 3: Fetch subcategories for this category
+            print("📡 Fetching subcategories for category: \(matchingCategory.id)")
+            await fetchSubcategories()
+            print("   Available subcategories: \(subcategories.map { "\($0.name) (\($0.id))" })")
+            
+            // Step 4: Find and select subcategory by ID
+            if let subCategoryId = product.subCategory,
+               let matchingSubcategory = subcategories.first(where: { $0.id == subCategoryId }) {
+                state.selectedSubcategory = matchingSubcategory
+                print("✅ Found matching subcategory: \(matchingSubcategory.name) (\(matchingSubcategory.id))")
+                
+                // Step 5: Fetch brands for this subcategory
+                print("📡 Fetching brands for subcategory: \(matchingSubcategory.id)")
+                await fetchBrands()
+                print("   Available brands: \(brands.map { "\($0.name) (\($0.id))" })")
+                
+                // Step 6: Find and select brand by ID
+                if let matchingBrand = brands.first(where: { $0.id == product.brand.id }) {
+                    state.selectedBrand = matchingBrand
+                    print("✅ Found matching brand: \(matchingBrand.name) (\(matchingBrand.id))")
+                    
+                    // Step 7: Fetch products for this brand
+                    print("📡 Fetching products for brand: \(matchingBrand.id)")
+                    await fetchProducts()
+                    print("   Available products: \(products.map { "\($0.name) (\($0.id))" })")
+                    
+                    // Step 8: Find and select product by ID
+                    if let matchingProduct = products.first(where: { $0.id == product.id }) {
+                        state.selectedProduct = matchingProduct
+                        print("✅ Found matching product: \(matchingProduct.name) (\(matchingProduct.id))")
+                    } else {
+                        print("⚠️ No matching product found for ID: \(product.id)")
+                    }
+                } else {
+                    print("⚠️ No matching brand found for ID: \(product.brand.id)")
+                }
+            } else {
+                print("⚠️ No matching subcategory found for ID: \(product.subCategory ?? "nil")")
+            }
+        } else {
+            print("⚠️ No matching category found for ID: \(product.category ?? "nil")")
+        }
+        
+        // If no matching categories found, use custom category approach
+        if state.selectedCategory == nil {
+            print("🔄 Using custom category approach")
+            state.isUsingCustomCategory = true
+            
+            // Extract names from the nested brand structure
+            let categoryName = product.brand.subCategory.category.name
+            let subCategoryName = product.brand.subCategory.name
+            let brandName = product.brand.name
+            
+            state.customCategory = categoryName
+            state.customSubCategory = subCategoryName
+            state.customBrand = brandName
+            state.customProduct = product.name
+            
+            print("📝 Custom category values:")
+            print("   Category: \(categoryName)")
+            print("   SubCategory: \(subCategoryName)")
+            print("   Brand: \(brandName)")
+            print("   Product: \(product.name)")
+        }
+        
+        print("🎯 Final state:")
+        print("   Selected Category: \(state.selectedCategory?.name ?? "nil")")
+        print("   Selected Subcategory: \(state.selectedSubcategory?.name ?? "nil")")
+        print("   Selected Brand: \(state.selectedBrand?.name ?? "nil")")
+        print("   Selected Product: \(state.selectedProduct?.name ?? "nil")")
+        print("   Using Custom Category: \(state.isUsingCustomCategory)")
+    }
+    
     func editPost(postId: String) async {
         guard state.isValid else {
             errorMessage = "Please fill in all required fields"

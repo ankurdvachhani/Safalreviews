@@ -11,6 +11,10 @@ struct CreatePostView: View {
     var postToEdit: Post? = nil
     var isEditMode: Bool { postToEdit != nil }
     
+    // Product review properties
+    var productToReview: ProductReview? = nil
+    var isProductReviewMode: Bool { productToReview != nil }
+    
     @State private var showImagePicker = false
     @State private var showVideoPicker = false
     @State private var showDocumentPicker = false
@@ -177,6 +181,13 @@ struct CreatePostView: View {
             if isEditMode, let post = postToEdit {
                 viewModel.populateForEditing(post: post)
             }
+            
+            // Auto-populate category if in product review mode
+            if isProductReviewMode, let product = productToReview {
+                Task {
+                    await viewModel.populateForProductReview(product: product)
+                }
+            }
         }
     }
     
@@ -244,7 +255,7 @@ struct CreatePostView: View {
             
             Spacer()
             
-            Text(isEditMode ? "Edit Post" : "Create Post")
+            Text(isEditMode ? "Edit Post" : (isProductReviewMode ? "Write Review" : "Create Post"))
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
@@ -939,8 +950,8 @@ struct CreatePostView: View {
                     }
                     
                     Text(viewModel.isCreatingPost ? 
-                         (isEditMode ? "Updating Post..." : "Creating Post...") : 
-                         (isEditMode ? "Update Post" : "Create Post"))
+                         (isEditMode ? "Updating Post..." : (isProductReviewMode ? "Publishing Review..." : "Creating Post...")) : 
+                         (isEditMode ? "Update Post" : (isProductReviewMode ? "Publish Review" : "Create Post")))
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .font(.headline)

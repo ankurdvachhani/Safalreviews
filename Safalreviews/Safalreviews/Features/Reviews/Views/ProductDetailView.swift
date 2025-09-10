@@ -903,36 +903,18 @@ struct ProductDetailShimmerBox: View {
     }
 }
 
-// MARK: - Write Review View (Placeholder)
+// MARK: - Write Review View
 struct WriteReviewView: View {
     let product: ProductReview
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Write Review for \(product.name)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .padding()
-                
-                Text("This is a placeholder for the write review functionality")
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                
-                Spacer()
-            }
-            .navigationTitle("Write Review")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
+        CreatePostView(
+            onPostCreated: {
+                dismiss()
+            },
+            productToReview: product
+        )
     }
 }
 
