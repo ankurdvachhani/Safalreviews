@@ -9,9 +9,7 @@ struct CommentSheet: View {
     @State private var showingImagePicker = false
     @State private var showingCamera = false
     @State private var showingImageSourceSheet = false
-    @State private var showingFullScreenMedia = false
-    @State private var selectedMediaURLs: [String] = []
-    @State private var selectedMediaIndex = 0
+    @State private var showingFullScreenMedia: MediaPresentationData?
     
     var body: some View {
         NavigationView {
@@ -56,10 +54,10 @@ struct CommentSheet: View {
                 ]
             )
         }
-        .fullScreenCover(isPresented: $showingFullScreenMedia) {
+        .fullScreenCover(item: $showingFullScreenMedia) { mediaData in
             FullScreenMediaView(
-                mediaURLs: selectedMediaURLs,
-                initialIndex: selectedMediaIndex,
+                mediaURLs: mediaData.mediaURLs,
+                initialIndex: mediaData.initialIndex,
                 isPresented: $showingFullScreenMedia
             )
         }
@@ -123,9 +121,10 @@ struct CommentSheet: View {
                                     }
                                 },
                                 onImageTap: { imageURLs, selectedIndex in
-                                    selectedMediaURLs = imageURLs
-                                    selectedMediaIndex = selectedIndex
-                                    showingFullScreenMedia = true
+                                    showingFullScreenMedia = MediaPresentationData(
+                                        mediaURLs: imageURLs,
+                                        initialIndex: selectedIndex
+                                    )
                                 }
                             )
                         }

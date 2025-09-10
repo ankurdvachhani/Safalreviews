@@ -8,10 +8,9 @@ struct LatestReviewsView: View {
     @State private var isHeaderVisible = true
     @State private var lastScrollOffset: CGFloat = 0
     @State private var headerOffset: CGFloat = 0
-    @State private var showingFullScreenMedia = false
     @State private var selectedMediaIndex = 0
     @State private var selectedMediaURLs: [String] = []
-    @State private var showingCommentSheet = false
+    @State private var showingFullScreenMedia: MediaPresentationData?
     @State private var selectedPostForComments: Post?
     @State private var showingCreatePost = false
     @State private var showingDeleteAlert = false
@@ -47,27 +46,25 @@ struct LatestReviewsView: View {
         .toast(message: $viewModel.errorMessage, type: .error)
         .toast(message: $viewModel.successMessage, type: .success)
         .navigationViewStyle(StackNavigationViewStyle())
-        .fullScreenCover(isPresented: $showingFullScreenMedia) {
+        .fullScreenCover(item: $showingFullScreenMedia) { mediaData in
             FullScreenMediaView(
-                mediaURLs: selectedMediaURLs,
-                initialIndex: selectedMediaIndex,
+                mediaURLs: mediaData.mediaURLs,
+                initialIndex: mediaData.initialIndex,
                 isPresented: $showingFullScreenMedia
             )
         }
-        .sheet(isPresented: $showingCommentSheet) {
-            if let post = selectedPostForComments {
-                CommentSheet(
-                    post: post,
-                    onCommentAdded: {
-                        // Update the comment count for the selected post
-                        if let index = viewModel.posts.firstIndex(where: { $0.id == post.id }) {
-                            viewModel.posts[index].reviews.append(Review.mockReview)
-                        }
+        .sheet(item: $selectedPostForComments) { post in
+            CommentSheet(
+                post: post,
+                onCommentAdded: {
+                    // Update the comment count for the selected post
+                    if let index = viewModel.posts.firstIndex(where: { $0.id == post.id }) {
+                        viewModel.posts[index].reviews.append(Review.mockReview)
                     }
-                )
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            }
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingCreatePost) {
             CreatePostView(onPostCreated: {
@@ -224,13 +221,13 @@ struct LatestReviewsView: View {
                         viewModel: viewModel,
                         isMyPosts: isMyPosts,
                         onMediaTap: { mediaURLs, selectedIndex in
-                            selectedMediaURLs = mediaURLs
-                            selectedMediaIndex = selectedIndex
-                            showingFullScreenMedia = true
+                            showingFullScreenMedia = MediaPresentationData(
+                                mediaURLs: mediaURLs,
+                                initialIndex: selectedIndex
+                            )
                         },
                         onCommentTap: { post in
                             selectedPostForComments = post
-                            showingCommentSheet = true
                         },
                         onEditTap: { post in
                             postToEdit = post
@@ -757,14 +754,14 @@ struct ScrollOffsetPreferenceKey: PreferenceKey {
 struct FullScreenMediaView: View {
     let mediaURLs: [String]
     let initialIndex: Int
-    @Binding var isPresented: Bool
+    @Binding var isPresented: MediaPresentationData?
     @State private var currentIndex: Int
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
     
-    init(mediaURLs: [String], initialIndex: Int, isPresented: Binding<Bool>) {
+    init(mediaURLs: [String], initialIndex: Int, isPresented: Binding<MediaPresentationData?>) {
         self.mediaURLs = mediaURLs
         self.initialIndex = initialIndex
         self._isPresented = isPresented
@@ -780,7 +777,7 @@ struct FullScreenMediaView: View {
                 // Header with close button and counter
                 HStack {
                     Button(action: {
-                        isPresented = false
+                        isPresented = nil
                     }) {
                         Image(systemName: "xmark")
                             .font(.title2)
@@ -808,7 +805,9 @@ struct FullScreenMediaView: View {
                 }
                 .padding()
                 
-                // Media content
+                // Media content - centered
+                Spacer()
+                
                 TabView(selection: $currentIndex) {
                     ForEach(Array(mediaURLs.enumerated()), id: \.element) { index, url in
                         ZoomableImageView(imageURL: url)
@@ -823,6 +822,8 @@ struct FullScreenMediaView: View {
                     offset = .zero
                     lastOffset = .zero
                 }
+                
+                Spacer()
             }
         }
         .statusBarHidden()
