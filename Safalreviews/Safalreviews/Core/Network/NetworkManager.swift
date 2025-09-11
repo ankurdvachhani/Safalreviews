@@ -147,9 +147,9 @@ actor NetworkManager: NetworkManaging {
             case 200:
                 return resetResponse.data ?? UserModel(
                     id: nil, firstName: nil, lastName: nil, email: nil, role: nil, country: nil,
-                    profilePicture: nil, isEmailVerified: nil, createdAt: nil, updatedAt: nil,
-                    phoneNumber: nil, message: nil, success: nil, statusCode: nil, error: nil,
-                    emailVerifiedId: nil, userSlug: nil, companySlug: nil, status: nil, metadata: nil, profilePictureSign: nil, isTwoFactorEnabled: nil,auth2faEmail: nil,auth2faPhoneNumber: nil,auth2faBackupPassword: nil
+                    state: nil, dob: nil, profilePicture: nil, isEmailVerified: nil,
+                    createdAt: nil, updatedAt: nil, phoneNumber: nil, message: nil, success: nil,
+                    statusCode: nil, error: nil, emailVerifiedId: nil, phoneNumberVerifiedId: nil, userSlug: nil, companySlug: nil, applicationSlug: nil, status: nil, metadata: nil, profilePictureSign: nil,isTwoFactorEnabled: nil,auth2faEmail: nil,auth2faPhoneNumber: nil,auth2faBackupPassword: nil
                 )
             case 404:
                 throw NetworkError.apiError(resetResponse.message ?? "")
@@ -290,9 +290,9 @@ actor NetworkManager: NetworkManaging {
             case 200:
                 return authResponse.data ?? UserModel(
                     id: nil, firstName: nil, lastName: nil, email: nil, role: nil, country: nil,
-                    profilePicture: nil, isEmailVerified: nil, createdAt: nil, updatedAt: nil,
-                    phoneNumber: nil, message: nil, success: nil, statusCode: nil, error: nil,
-                    emailVerifiedId: nil, userSlug: nil, companySlug: nil, status: nil, metadata: nil, profilePictureSign: nil, isTwoFactorEnabled: nil, auth2faEmail: nil, auth2faPhoneNumber: nil, auth2faBackupPassword: nil
+                    state: nil, dob: nil, profilePicture: nil, isEmailVerified: nil,
+                    createdAt: nil, updatedAt: nil, phoneNumber: nil, message: nil, success: nil,
+                    statusCode: nil, error: nil, emailVerifiedId: nil, phoneNumberVerifiedId: nil, userSlug: nil, companySlug: nil, applicationSlug: nil, status: nil, metadata: nil, profilePictureSign: nil,isTwoFactorEnabled: nil,auth2faEmail: nil,auth2faPhoneNumber: nil,auth2faBackupPassword: nil
                 )
             case 404:
                 throw NetworkError.apiError(authResponse.message ?? "")

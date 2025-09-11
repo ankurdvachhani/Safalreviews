@@ -17,11 +17,13 @@ struct ProfileValidationError {
     var lastName: String?
     var email: String?
     var country: String?
+    var state: String?
     var phoneNumber: String?
-    var ncpiNumber: String?
+    var dob: String?
+    var gender: String?
     
     var hasErrors: Bool {
-        return [firstName, lastName, email, country, phoneNumber, ncpiNumber].contains { $0 != nil }
+        return [firstName, lastName, email, country, state, phoneNumber, dob, gender].contains { $0 != nil }
     }
 }
 
@@ -30,8 +32,10 @@ struct ProfileUpdateRequest: Codable {
     let lastName: String
     let email: String
     let country: String
+    let state: String?
     let phoneNumber: Int64?
-    let ncpiNumber: String?
+    let dob: String?
+    let gender: String?
 }
 
 struct ProfileResponse: Codable {
@@ -47,16 +51,34 @@ struct ProfileData {
     var lastName: String = ""
     var email: String = ""
     var country: String = ""
+    var state: String = ""
     var phoneNumber: String = ""
+    var dob: String = ""
+    var gender: String = ""
+    var username: String = ""
     var isEmailVerified: Bool = true
     var profilePictureUrl: String?
     var isPhoneVerified: Bool = true
     var role:String = ""
-    var ncpiNumber: String? = nil
     var isTwoFactorEnabled: Bool = false
     
     var fullName: String {
         "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+    }
+    
+    var formattedDateOfBirth: String {
+        guard !dob.isEmpty else { return "Not set" }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        
+        if let date = formatter.date(from: dob) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.dateStyle = .medium
+            return displayFormatter.string(from: date)
+        }
+        return dob
     }
     
     init() {}
@@ -66,11 +88,14 @@ struct ProfileData {
         lastName = user.lastName ?? ""
         email = user.email ?? ""
         country = user.country ?? ""
+        state = user.state ?? ""
+        dob = user.dob ?? ""
+        gender = user.metadata?.gender ?? ""
+        username = user.metadata?.username ?? ""
         isEmailVerified = user.isEmailVerified ?? true
         profilePictureUrl = user.profilePictureSign
         isPhoneVerified = user.isPhoneVerified ?? true
         role = user.role ?? ""
-        ncpiNumber = user.metadata?.ncpiNumber ?? ""
         isTwoFactorEnabled = user.isTwoFactorEnabled ?? false
         
         if let phone = user.phoneNumber {
@@ -84,12 +109,12 @@ struct ProfileData {
 final class ProfileViewModel: ObservableObject {
     // MARK: - Delete Account
     func deleteAccount(password: String) async -> Bool {
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
             let success = try await profileService.deleteAccount(password: password)
-            state = .loaded
+            loadingState = .loaded
             
             if success {
                 // Clear user data on successful deletion
@@ -101,7 +126,7 @@ final class ProfileViewModel: ObservableObject {
                 return false
             }
         } catch {
-            state = .error(error.localizedDescription)
+            loadingState = .error(error.localizedDescription)
             errorMessage = error.localizedDescription
             return false
         }
@@ -111,12 +136,12 @@ final class ProfileViewModel: ObservableObject {
     func updateTwoFactorAuthentication(enabled: Bool) async {
         // This method is now handled by the dedicated TwoFactorAuthViewModel
         // Keeping it for backward compatibility but it's deprecated
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
             let success = try await profileService.updateTwoFactorAuthentication(enabled: enabled)
-            state = .loaded
+            loadingState = .loaded
             
             if success {
                 isTwoFactorEnabled = enabled
@@ -127,7 +152,7 @@ final class ProfileViewModel: ObservableObject {
                 isTwoFactorEnabled = !enabled
             }
         } catch {
-            state = .error(error.localizedDescription)
+            loadingState = .error(error.localizedDescription)
             errorMessage = error.localizedDescription
             // Revert the toggle if the API call failed
          //   isTwoFactorEnabled = !enabled
@@ -135,7 +160,7 @@ final class ProfileViewModel: ObservableObject {
     }
 
     // MARK: - Published Properties
-    @Published private(set) var state = ViewState.idle
+    @Published private(set) var loadingState = ViewState.idle
     @Published var profile = ProfileData()
     @Published private(set) var validationError = ProfileValidationError()
     @Published private(set) var errorMessage: String?
@@ -160,7 +185,7 @@ final class ProfileViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     var isLoading: Bool {
-        if case .loading = state {
+        if case .loading = loadingState {
             return true
         }
         return false
@@ -175,7 +200,10 @@ final class ProfileViewModel: ObservableObject {
         validationError.lastName == nil &&
         validationError.email == nil &&
         validationError.country == nil &&
-        validationError.phoneNumber == nil
+        validationError.state == nil &&
+        validationError.phoneNumber == nil &&
+        validationError.dob == nil &&
+        validationError.gender == nil
     }
     
     var formattedPhoneNumber: String {
@@ -261,7 +289,7 @@ final class ProfileViewModel: ObservableObject {
     
     // MARK: - Public Methods
     func fetchProfile() async {
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -290,23 +318,23 @@ final class ProfileViewModel: ObservableObject {
                 }
             }
             
-            state = .loaded
+            loadingState = .loaded
         } catch {
-            state = .error(error.localizedDescription)
+            loadingState = .error(error.localizedDescription)
             errorMessage = error.localizedDescription
         }
     }
     
     func uploadImage(_ image: UIImage) async throws -> String? {
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
             let imagePath = try await profileService.uploadImage(image)
-            state = .loaded
+            loadingState = .loaded
             return imagePath
         } catch {
-            state = .error(error.localizedDescription)
+            loadingState = .error(error.localizedDescription)
             errorMessage = error.localizedDescription
             throw error
         }
@@ -315,11 +343,11 @@ final class ProfileViewModel: ObservableObject {
     func resetProfile() {
         profile = ProfileData()
         validationError = ProfileValidationError()
-        state = .idle
+        loadingState = .idle
     }
     
-    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, profilePicture: String, ncpiNumber: String? = nil) async {
-        guard validateFields(firstName: firstName, lastName: lastName, email: email, phoneNumber: phoneNumber, country: country, ncpiNumber: ncpiNumber) else {
+    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String) async {
+        guard validateFields(firstName: firstName, lastName: lastName, email: email, phoneNumber: phoneNumber, country: country, state: state, dob: dob, gender: gender) else {
             return
         }
         
@@ -336,7 +364,7 @@ final class ProfileViewModel: ObservableObject {
             return
         }
         
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -346,10 +374,12 @@ final class ProfileViewModel: ObservableObject {
                 email: email,
                 phoneNumber: String(formattedNumber.dropFirst()),
                 country: country,
+                state: state,
+                dob: dob,
+                gender: gender,
                 profilePicture: profilePicture,
                 phoneNumberVerifyId: isPhoneVerified ? verifyId : nil,
-                emailVerifyId: isEmailVerified ? emailVerifyId : nil,
-                ncpiNumber: ncpiNumber
+                emailVerifyId: isEmailVerified ? emailVerifyId : nil
             )
             
             if success {
@@ -357,17 +387,17 @@ final class ProfileViewModel: ObservableObject {
                 let response = try await profileService.fetchProfile()
                 profile = ProfileData(from: response)
                 successMessage = "Profile updated successfully"
-                state = .loaded
+                loadingState = .loaded
                 
                 // Reset verification states
                 resetPhoneVerification()
                 resetEmailVerification()
             } else {
-                state = .error("Failed to update profile")
+                loadingState = .error("Failed to update profile")
                 errorMessage = "Failed to update profile"
             }
         } catch {
-            state = .error(error.localizedDescription)
+            loadingState = .error(error.localizedDescription)
             errorMessage = error.localizedDescription
         }
     }
@@ -418,7 +448,7 @@ final class ProfileViewModel: ObservableObject {
             return
         }
         
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -429,7 +459,7 @@ final class ProfileViewModel: ObservableObject {
                 isSendRequest: true
             )
             
-            state = .loaded
+            loadingState = .loaded
             
             if response.success ?? false {
                 verifyId = response.verifyId ?? ""
@@ -439,10 +469,10 @@ final class ProfileViewModel: ObservableObject {
                 errorMessage = response.message ?? "Failed to send verification code"
             }
         } catch let error as NetworkError {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = NetworkErrorHandler.handle(error: error)
         } catch {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = error.localizedDescription
         }
     }
@@ -450,7 +480,7 @@ final class ProfileViewModel: ObservableObject {
     func verifyOTP(phoneNumber: String) async {
         guard validateOTP() else { return }
         
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -461,7 +491,7 @@ final class ProfileViewModel: ObservableObject {
                 isSendRequest: false
             )
             
-            state = .loaded
+            loadingState = .loaded
             
             if response.success ?? false {
                 handleSuccessfulVerification(phoneNumber: phoneNumber)
@@ -470,10 +500,10 @@ final class ProfileViewModel: ObservableObject {
                 errorMessage = response.message ?? "Invalid verification code"
             }
         } catch let error as NetworkError {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = NetworkErrorHandler.handle(error: error)
         } catch {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = error.localizedDescription
         }
     }
@@ -518,7 +548,7 @@ final class ProfileViewModel: ObservableObject {
             return
         }
         
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -529,7 +559,7 @@ final class ProfileViewModel: ObservableObject {
                 isSendRequest: true
             )
             
-            state = .loaded
+            loadingState = .loaded
             
             if response.success ?? false {
                 emailVerifyId = response.verifyId ?? ""
@@ -539,10 +569,10 @@ final class ProfileViewModel: ObservableObject {
                 errorMessage = response.message ?? "Failed to send verification code"
             }
         } catch let error as NetworkError {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = NetworkErrorHandler.handle(error: error)
         } catch {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = error.localizedDescription
         }
     }
@@ -550,7 +580,7 @@ final class ProfileViewModel: ObservableObject {
     func verifyEmailOTP(email: String) async {
         guard validateOTP() else { return }
         
-        state = .loading
+        loadingState = .loading
         errorMessage = nil
         
         do {
@@ -561,7 +591,7 @@ final class ProfileViewModel: ObservableObject {
                 isSendRequest: false
             )
             
-            state = .loaded
+            loadingState = .loaded
             
             if response.success ?? false {
                 handleSuccessfulEmailVerification(email: email)
@@ -570,10 +600,10 @@ final class ProfileViewModel: ObservableObject {
                 errorMessage = response.message ?? "Invalid verification code"
             }
         } catch let error as NetworkError {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = NetworkErrorHandler.handle(error: error)
         } catch {
-            state = .loaded
+            loadingState = .loaded
             errorMessage = error.localizedDescription
         }
     }
@@ -587,7 +617,7 @@ final class ProfileViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
-    private func validateFields(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, ncpiNumber: String? = nil) -> Bool {
+    private func validateFields(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String) -> Bool {
         var isValid = true
         var errors = ProfileValidationError()
         
@@ -641,12 +671,22 @@ final class ProfileViewModel: ObservableObject {
             isValid = false
         }
         
-        // NCPI Number validation (required for non-Patient roles)
-        if profile.role != "Patient" {
-            if let ncpiNumber = ncpiNumber, ncpiNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                errors.ncpiNumber = "NCPI Number is required for \(profile.role) role"
-                isValid = false
-            }
+        // State validation (required for USA and IND)
+        if (country == "USA" || country == "IND") && state.isEmpty {
+            errors.state = "Please select your state"
+            isValid = false
+        }
+        
+        // Date of Birth validation
+        if dob.isEmpty {
+            errors.dob = "Date of birth is required"
+            isValid = false
+        }
+        
+        // Gender validation
+        if gender.isEmpty {
+            errors.gender = "Please select your gender"
+            isValid = false
         }
         
         validationError = errors

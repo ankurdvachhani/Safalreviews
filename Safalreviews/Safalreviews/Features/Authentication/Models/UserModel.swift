@@ -7,6 +7,8 @@ struct UserModel: Codable {
     let email: String?
     let role: String?
     let country: String?
+    let state: String?
+    let dob: String?
     let profilePicture: String?
     let isEmailVerified: Bool?
     let createdAt: String?
@@ -18,8 +20,10 @@ struct UserModel: Codable {
     let error: String?
     let isPhoneVerified:Bool? = true
     let emailVerifiedId: String?
+    let phoneNumberVerifiedId: String?
     let userSlug: String?
     let companySlug:String?
+    let applicationSlug: String?
     let status:String?
     let metadata:GetUserModelMetadata?
     let profilePictureSign:String?
@@ -30,10 +34,10 @@ struct UserModel: Codable {
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case firstName, lastName, email, role, country
+        case firstName, lastName, email, role, country, state, dob
         case profilePicture, isEmailVerified, createdAt, updatedAt
-        case phoneNumber,emailVerifiedId,userSlug,companySlug,metadata
-        case message, success, statusCode, error,status,profilePictureSign
+        case phoneNumber, emailVerifiedId, phoneNumberVerifiedId, userSlug, companySlug, applicationSlug, metadata
+        case message, success, statusCode, error, status, profilePictureSign
         case isTwoFactorEnabled, auth2faEmail, auth2faPhoneNumber, auth2faBackupPassword
     }
 }

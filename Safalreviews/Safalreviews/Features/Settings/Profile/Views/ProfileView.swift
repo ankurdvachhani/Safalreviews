@@ -12,7 +12,9 @@ struct ProfileView: View {
     @State private var phoneNumber: String = ""
     @State private var countryCode: String = "+1"
     @State private var country: String = ""
-    @State private var ncpiNumber: String = ""
+    @State private var state: String = ""
+    @State private var dob: Date = Date()
+    @State private var gender: String = ""
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var showImagePicker = false
@@ -52,14 +54,23 @@ struct ProfileView: View {
                                 }
                                 
                                 let fullPhoneNumber = phoneNumber.isEmpty ? "" : "\(countryCode)\(phoneNumber)"
+                                
+                                // Format date of birth
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                                formatter.timeZone = TimeZone(abbreviation: "UTC")
+                                let dobString = formatter.string(from: dob)
+                                
                                 await viewModel.updateProfile(
                                     firstName: firstName,
                                     lastName: lastName,
                                     email: email,
                                     phoneNumber: fullPhoneNumber,
                                     country: country,
-                                    profilePicture: imagePath ?? "",
-                                    ncpiNumber: ncpiNumber.isEmpty ? nil : ncpiNumber
+                                    state: state,
+                                    dob: dobString,
+                                    gender: gender,
+                                    profilePicture: imagePath ?? ""
                                 )
                                 if viewModel.errorMessage == nil {
                                     isEditMode = false
@@ -72,7 +83,18 @@ struct ProfileView: View {
                             lastName = viewModel.profile.lastName
                             email = viewModel.profile.email
                             country = viewModel.profile.country
-                            ncpiNumber = viewModel.profile.ncpiNumber ?? ""
+                            state = viewModel.profile.state
+                            gender = viewModel.profile.gender
+                            
+                            // Set date of birth
+                            if !viewModel.profile.dob.isEmpty {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                                formatter.timeZone = TimeZone(abbreviation: "UTC")
+                                if let date = formatter.date(from: viewModel.profile.dob) {
+                                    dob = date
+                                }
+                            }
                             
                             // Set phone number and country code based on profile phone number
                             let profilePhone = viewModel.profile.phoneNumber
@@ -118,7 +140,19 @@ struct ProfileView: View {
                             firstName = viewModel.profile.firstName
                             lastName = viewModel.profile.lastName
                             email = viewModel.profile.email
-                            ncpiNumber = viewModel.profile.ncpiNumber ?? ""
+                            country = viewModel.profile.country
+                            state = viewModel.profile.state
+                            gender = viewModel.profile.gender
+                            
+                            // Reset date of birth
+                            if !viewModel.profile.dob.isEmpty {
+                                let formatter = DateFormatter()
+                                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                                formatter.timeZone = TimeZone(abbreviation: "UTC")
+                                if let date = formatter.date(from: viewModel.profile.dob) {
+                                    dob = date
+                                }
+                            }
                             
                             // Set phone number and country code based on profile phone number
                             let profilePhone = viewModel.profile.phoneNumber
@@ -441,7 +475,9 @@ struct ProfileView: View {
                         phoneNumber: $phoneNumber,
                         countryCode: $countryCode,
                         country: $country,
-                        ncpiNumber: $ncpiNumber,
+                        state: $state,
+                        dob: $dob,
+                        gender: $gender,
                         viewModel: viewModel,
                         validationError: viewModel.validationError,
                         showEmailOTPView: $showEmailOTPView,
@@ -584,7 +620,9 @@ struct EditableFieldsView: View {
     @Binding var phoneNumber: String
     @Binding var countryCode: String
     @Binding var country: String
-    @Binding var ncpiNumber: String
+    @Binding var state: String
+    @Binding var dob: Date
+    @Binding var gender: String
     @ObservedObject var viewModel: ProfileViewModel
     let validationError: ProfileValidationError
     @Binding var showEmailOTPView: Bool
@@ -702,21 +740,18 @@ struct EditableFieldsView: View {
                     }
                 }
                 
-                // NCPI Number field (only for non-Patient roles)
-                if viewModel.profile.role != "Patient" {
-                    CustomTextField(
-                        title: "NCPI Number*",
-                        placeholder: "Enter your NCPI Number",
-                        text: Binding(
-                            get: { ncpiNumber },
-                            set: { newValue in
-                                ncpiNumber = newValue
-                                viewModel.profile.ncpiNumber = newValue
-                            }
-                        ),
-                        error: validationError.ncpiNumber
-                    )
-                }
+                // Date of Birth
+                DatePickerField(
+                    title: "Date of Birth*",
+                    selectedDate: $dob,
+                    error: validationError.dob
+                )
+                
+                // Gender
+                GenderPicker(
+                    selectedGender: $gender,
+                    error: validationError.gender
+                )
             }
             .padding(16)
             .background(Color(.systemBackground))
@@ -753,6 +788,15 @@ struct EditableFieldsView: View {
                         phoneNumber = ""
                         viewModel.resetPhoneVerification()
                     }
+                }
+                
+                // State Picker (only show for USA and IND)
+                if country == "USA" || country == "IND" {
+                    StatePicker(
+                        selectedState: $state,
+                        country: country,
+                        error: validationError.state
+                    )
                 }
                 
                 phoneNumberField
@@ -901,12 +945,10 @@ struct ProfileDetailsView: View {
                 detailRow("Last Name", value: profile.lastName)
                 Divider()
                 detailRow("Email", value: profile.email, isVerified: profile.isEmailVerified)
-                
-                // NCPI Number (only for non-Patient roles)
-                if profile.role != "Patient" {
-                    Divider()
-                    detailRow("NCPI Number", value: profile.ncpiNumber ?? "Not set")
-                }
+                Divider()
+                detailRow("Date of Birth", value: profile.formattedDateOfBirth)
+                Divider()
+                detailRow("Gender", value: profile.gender.isEmpty ? "Not set" : profile.gender.capitalized)
             }
             .background(Color(.systemBackground))
             .cornerRadius(10)
@@ -919,9 +961,13 @@ struct ProfileDetailsView: View {
             
             VStack(spacing: 0) {
                 detailRow("Country", value: profile.country)
-                if !profile.phoneNumber.isEmpty {
-                    detailRow("Phone", value: profile.phoneNumber)
+                if !profile.state.isEmpty {
                     Divider()
+                    detailRow("State", value: profile.state)
+                }
+                if !profile.phoneNumber.isEmpty {
+                    Divider()
+                    detailRow("Phone", value: profile.phoneNumber)
                 }
             }
             .background(Color(.systemBackground))

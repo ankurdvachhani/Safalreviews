@@ -334,7 +334,7 @@ class PostCreationViewModel: ObservableObject {
     
     // MARK: - Post Editing
     
-    func populateForEditing(post: Post) {
+    func populateForEditing(post: Post) async {
         // Clear existing data
         clearForm()
         
@@ -472,10 +472,45 @@ class PostCreationViewModel: ObservableObject {
         }
         
         // Load existing media (images and videos)
-        // Note: This would require downloading and converting URLs to UIImage/URL objects
-        // For now, we'll start with empty media arrays
+        await loadExistingMedia(from: post)
+    }
+    
+    // MARK: - Media Loading for Editing
+    
+    private func loadExistingMedia(from post: Post) async {
+        // Clear existing media first
         state.selectedImages = []
         state.selectedVideos = []
+        
+        // Load images
+        for imageURL in post.imgs {
+            if let image = await downloadImage(from: imageURL) {
+                await MainActor.run {
+                    state.selectedImages.append(image)
+                }
+            }
+        }
+        
+        // Load videos
+        for videoURLString in post.videos {
+            if let videoURL = URL(string: videoURLString) {
+                await MainActor.run {
+                    state.selectedVideos.append(videoURL)
+                }
+            }
+        }
+    }
+    
+    private func downloadImage(from urlString: String) async -> UIImage? {
+        guard let url = URL(string: urlString) else { return nil }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return UIImage(data: data)
+        } catch {
+            print("Error downloading image from \(urlString): \(error)")
+            return nil
+        }
     }
     
     func populateForProductReview(product: ProductReview) async {

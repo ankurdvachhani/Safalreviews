@@ -55,4 +55,6 @@ struct GetUserModelData: Codable {
 struct GetUserModelMetadata: Codable {
     let organizationId: String?
     let ncpiNumber: String?
+    let username: String?
+    let gender: String?
 }

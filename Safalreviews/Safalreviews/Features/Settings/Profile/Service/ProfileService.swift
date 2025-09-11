@@ -70,7 +70,7 @@ struct TwoFactorAuthData: Codable {
 
 protocol ProfileServicing {
     func fetchProfile() async throws -> UserModel
-    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?, ncpiNumber: String?) async throws -> Bool
+    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> Bool
     func uploadImage(_ image: UIImage) async throws -> String?
     func sendCodeForVerification(type: String, value: String, phoneNumber: String, isSendRequest: Bool) async throws -> VerificationResponse
     func deleteAccount(password: String) async throws -> Bool
@@ -110,7 +110,6 @@ actor ProfileService: ProfileServicing {
   
     
     private let networkManager: NetworkManaging
-    private let folderName = "profile"
     
     init(networkManager: NetworkManaging = NetworkManager()) {
         self.networkManager = networkManager
@@ -152,51 +151,67 @@ actor ProfileService: ProfileServicing {
     
     func uploadImage(_ image: UIImage) async throws -> String? {
         let smallImage = resizedImage(image)
-               guard let imageData = smallImage.jpegData(compressionQuality: 0.2) else {
-                   throw NetworkError.invalidData
-               }
+        guard let imageData = smallImage.jpegData(compressionQuality: 0.2) else {
+            throw NetworkError.invalidData
+        }
         
-        // Get image details
-        let imageSize = Int64(imageData.count)
         let timestamp = Int(Date().timeIntervalSince1970)
-        let uniqueFileName = "image_\(timestamp).jpg"
+        let uniqueFileName = "profile_image_\(timestamp).jpg"
         
-        print("Preparing to upload image: \(uniqueFileName) with size: \(imageSize)")
+        print("📤 Uploading profile image: \(uniqueFileName)")
         
-        // 1. Get upload URL with correct file information
-        let fileInfo = FileInfo(
-            name: uniqueFileName,
-            type: "image/jpeg",
-            size: imageSize
+        let uploadRequest = ProfileImageUploadRequest(
+            fileName: uniqueFileName,
+            folder: "reviews/profiles/pictures"
         )
         
-        let uploadRequest = UploadUrlRequest(
-            fileName: [fileInfo],
-            folderName: folderName
-        )
+        return try await uploadMedia(uploadRequest: uploadRequest, filedata: imageData, contentType: "image/jpeg")
+    }
+    
+    private func uploadMedia<T: Codable>(uploadRequest: T, filedata: Data, contentType: String) async throws -> String? {
         
-        // Get upload URL using NetworkManager
-        let uploadUrlResponse = try await networkManager.getUploadUrls(request: uploadRequest)
-        guard let uploadUrl = uploadUrlResponse.data.first else {
+        guard let url = URL(string: APIConfig.baseURL + APIConfig.Path.getUploadUrls) else {
+            throw NetworkError.invalidURL
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("access_token=\(TokenManager.shared.getToken() ?? "")", forHTTPHeaderField: "Cookie")
+        urlRequest.httpBody = try JSONEncoder().encode(uploadRequest)
+        
+        // Log the request
+        NetworkLogger.log(request: urlRequest)
+        
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        // Log the response
+        NetworkLogger.log(response: response, data: data, error: nil)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
         
-        print("Got signed URL for upload: \(uploadUrl.signedUrl)")
-        
-        // 2. Upload image using NetworkManager
-        try await networkManager.uploadFile(
-            url: uploadUrl.signedUrl,
-            data: imageData,
-            contentType: "image/jpeg"
-        )
-        
-        print("Image upload completed successfully")
-        let components = URLComponents(string: uploadUrl.signedUrl)
-        
-        return components?.path ?? ""
+        if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+            let uploadUrlResponse = try JSONDecoder().decode(ProfileImageUploadResponse.self, from: data)
+            
+            print("Got signed URL for upload: \(uploadUrlResponse.data.uploadUrl)")
+            
+            // Upload file using NetworkManager
+            try await networkManager.uploadFile(
+                url: uploadUrlResponse.data.uploadUrl,
+                data: filedata,
+                contentType: contentType
+            )
+            
+            print("✅ Profile image uploaded successfully")
+            return uploadUrlResponse.data.fileUrl
+        } else {
+            throw NetworkError.apiError("Failed to get upload URL: \(httpResponse.statusCode)")
+        }
     }
     
-    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?, ncpiNumber: String?) async throws -> Bool {
+    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> Bool {
         // First fetch current profile to compare email
         let currentProfile = try await fetchProfile()
         
@@ -204,7 +219,7 @@ actor ProfileService: ProfileServicing {
             throw NetworkError.unauthorized
         }
         
-        let endpoint = Endpoint(path: "\(APIConfig.Path.userUpdate)")
+        let endpoint = Endpoint(path: "\(APIConfig.Path.userUpdateById)/\(userId)")
         
         guard let url = URL(string: APIConfig.baseURL + endpoint.path) else {
             throw NetworkError.invalidURL
@@ -240,6 +255,24 @@ actor ProfileService: ProfileServicing {
             bodyData["country"] = country
         }
         
+        if !state.isEmpty {
+            bodyData["state"] = state
+        }
+        
+        if !dob.isEmpty {
+            bodyData["dob"] = dob
+        }
+        
+        // Add gender as top-level field
+        if !gender.isEmpty {
+            bodyData["gender"] = gender
+        }
+        
+        // Add username as top-level field (get from current profile metadata)
+        if let currentUsername = currentProfile.metadata?.username, !currentUsername.isEmpty {
+            bodyData["username"] = currentUsername
+        }
+        
         // Add phone number only if it's not empty and not just "+"
         if !phoneNumber.isEmpty && phoneNumber != "+" {
             let formattedPhoneNumber = phoneNumber.starts(with: "+") ? phoneNumber : "\(phoneNumber)"
@@ -258,13 +291,6 @@ actor ProfileService: ProfileServicing {
         // Add phoneNumberVerifyId if provided
         if let verifyId = phoneNumberVerifyId {
             bodyData["phoneNumberVerifyId"] = verifyId
-        }
-        
-        // Add NCPI Number if provided and not empty
-        if let ncpiNumber = ncpiNumber, !ncpiNumber.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-           let ncpiNumber = ncpiNumber.trimmingCharacters(in: .whitespacesAndNewlines)
-            let ncpiDict:[String:String] = ["ncpiNumber":ncpiNumber,"organizationId":TokenManager.shared.loadCurrentUser()?.metadata?.organizationId ?? ""]
-            bodyData["metadata"] = ncpiDict
         }
         
         do {
@@ -367,6 +393,23 @@ struct UserUpdateResponse: Codable {
     }
 }
 
+
+// MARK: - Profile Image Upload Models
+
+struct ProfileImageUploadRequest: Codable {
+    let fileName: String
+    let folder: String
+}
+
+struct ProfileImageUploadResponse: Codable {
+    let status: String
+    let data: ProfileUploadData
+}
+
+struct ProfileUploadData: Codable {
+    let uploadUrl: String
+    let fileUrl: String
+}
 
 extension NetworkError {
     static let uploadFailed = NetworkError.apiError("Failed to upload image")

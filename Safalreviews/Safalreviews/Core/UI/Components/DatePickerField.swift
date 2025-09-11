@@ -7,6 +7,7 @@ struct DatePickerField: View {
     @State private var showDatePicker = false
     @State private var hasSelectedDate = false
     
+    
     private let calendar = Calendar.current
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -49,6 +50,20 @@ struct DatePickerField: View {
             )
             .onTapGesture {
                 showDatePicker = true
+            }
+            .onAppear {
+                // Check if the date is not the default date (today)
+                let today = Date()
+                let calendar = Calendar.current
+                if !calendar.isDate(selectedDate, inSameDayAs: today) {
+                    hasSelectedDate = true
+                }
+            }
+            .onChange(of: selectedDate) { newDate in
+                // Update hasSelectedDate when date changes from outside
+                let today = Date()
+                let calendar = Calendar.current
+                hasSelectedDate = !calendar.isDate(newDate, inSameDayAs: today)
             }
             
             if showDatePicker {

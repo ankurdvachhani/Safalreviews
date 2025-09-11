@@ -179,7 +179,9 @@ struct CreatePostView: View {
             
             // Populate form if in edit mode
             if isEditMode, let post = postToEdit {
-                viewModel.populateForEditing(post: post)
+                Task {
+                    await viewModel.populateForEditing(post: post)
+                }
             }
             
             // Auto-populate category if in product review mode
