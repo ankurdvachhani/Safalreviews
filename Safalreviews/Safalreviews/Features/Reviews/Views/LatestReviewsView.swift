@@ -406,9 +406,9 @@ struct PostCardView: View {
             authorSection
             
             // Edit/Delete buttons for My Posts
-//            if isMyPosts {
-//                myPostsActionSection
-//            }
+            if isMyPosts {
+                myPostsActionSection
+            }
             
             // Images/Videos
             mediaSection
@@ -569,7 +569,7 @@ struct PostCardView: View {
     private var myPostsActionSection: some View {
         HStack(spacing: 12) {
             Button(action: {
-              //  onEditTap(post)
+                onEditTap(post)
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "pencil")
@@ -586,7 +586,7 @@ struct PostCardView: View {
             }
             
             Button(action: {
-               // onDeleteTap(post)
+                onDeleteTap(post)
             }) {
                 HStack(spacing: 6) {
                     Image(systemName: "trash")

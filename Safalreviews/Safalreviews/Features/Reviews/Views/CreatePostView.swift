@@ -370,7 +370,7 @@ struct CreatePostView: View {
                 
                 Button(action: {
                     Task {
-                        await viewModel.updateCategoryType("Person")
+                        await viewModel.updateCategoryType("People")
                     }
                 }) {
                     HStack {
