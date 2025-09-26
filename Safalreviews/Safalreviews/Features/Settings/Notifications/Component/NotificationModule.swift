@@ -10,49 +10,24 @@ import SwiftUICore
 
 enum NotificationModule: String, CaseIterable {
     case general = "general"
-    case drainageReminder = "drainageReminder"
-    case drainageTriggerLow = "drainageTriggerLow"
-    case drainageTriggerMid = "drainageTriggerMid"
-    case drainageTriggerHigh = "drainageTriggerHigh"
     
     var displayTitle: String {
         switch self {
         case .general:
             return "General"
-        case .drainageReminder:
-            return "Drainage Reminder"
-        case .drainageTriggerLow:
-            return "Drainage Alert"
-        case .drainageTriggerMid:
-            return "Drainage Alert"
-        case .drainageTriggerHigh:
-            return "Drainage Alert"
-      
         }
     }
     
     var priorityLabel: String? {
         switch self {
-        case .drainageTriggerLow:
-            return "Low"
-        case .drainageTriggerMid:
-            return "Mid"
-        case .drainageTriggerHigh:
-            return "High"
-        default:
+        case .general:
             return nil
         }
     }
     
     var priorityColor: Color {
         switch self {
-        case .drainageTriggerLow:
-            return .yellow
-        case .drainageTriggerMid:
-            return .orange
-        case .drainageTriggerHigh:
-            return .red
-        default:
+        case .general:
             return .clear
         }
     }
@@ -61,14 +36,6 @@ enum NotificationModule: String, CaseIterable {
         switch self {
         case .general:
             return "bell"
-        case .drainageTriggerLow:
-            return "drop.fill"
-        case .drainageTriggerMid:
-            return "drop.fill"
-        case .drainageTriggerHigh:
-            return "drop.fill"
-        case .drainageReminder:
-            return "clock.fill"
         }
     }
     
@@ -76,36 +43,24 @@ enum NotificationModule: String, CaseIterable {
         switch self {
         case .general:
             return "Receive general notifications about updates and important information."
-        case .drainageReminder:
-            return "You'll be notified if a patient misses their scheduled drainage."
-        case .drainageTriggerHigh:
-            return "High-priority alert for drainage monitoring."
-        case .drainageTriggerMid:
-            return "Medium-priority alert for drainage monitoring."
-        case .drainageTriggerLow:
-            return "Low-priority alert for drainage monitoring."
         }
     }
 }
 
 enum ReportModule: String, CaseIterable {
     case changeLog = "Change Log"
-    case IncidentReport = "Incident Report"
+   
 
     
     var icon: String {
         switch self {
         case .changeLog:
             return "text.document"
-        case .IncidentReport:
-            return "note.text.badge.plus"
         }
     }
     
     var subtitle: String {
         switch self {
-        case .IncidentReport:
-            return "View already generated report."
         case .changeLog:
             return "View all changes made to the app."
         }

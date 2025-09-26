@@ -20,23 +20,15 @@ struct NotificationSettingsView: View {
         switch module {
         case .general:
             return Binding(get: { settings.general }, set: { settings.general = $0 })
-        case .drainageTriggerLow:
-            return Binding(get: { settings.drainageTriggerLow }, set: { settings.drainageTriggerLow = $0 })
-        case .drainageTriggerMid:
-            return Binding(get: { settings.drainageTriggerMid }, set: { settings.drainageTriggerMid = $0 })
-        case .drainageTriggerHigh:
-            return Binding(get: { settings.drainageTriggerHigh }, set: { settings.drainageTriggerHigh = $0 })
-        case .drainageReminder:
-            return Binding(get: { settings.drainageReminder }, set: { settings.drainageReminder = $0 })
         }
     }
     
     private func getModulesForUserRole() -> [NotificationModule] {
         let userRole = TokenManager.shared.loadCurrentUser()?.role
-        if userRole == "Patient" {
-            return [.general, .drainageReminder]
+        if userRole == "reviews" {
+            return [.general]
         }
-        return NotificationModule.allCases
+        return [.general]
     }
 
     var body: some View {

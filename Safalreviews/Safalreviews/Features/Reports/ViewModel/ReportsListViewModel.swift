@@ -8,6 +8,18 @@
 import Foundation
 import UIKit
 
+
+struct SortInfo: Codable {
+    let order: String
+    let orderBy: String
+}
+struct PaginationInfo: Codable {
+    let page: Int
+    let limit: Int
+    let total: Int
+    let current: Int
+}
+
 // MARK: - Models
 struct ReportResponselog: Codable {
     let success: Bool

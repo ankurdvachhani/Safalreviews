@@ -263,12 +263,19 @@ class PostCreationViewModel: ObservableObject {
             }
             
             // Create post request
+            var categoryType = ""
+            if state.categoryType.lowercased().contains("people"){
+                categoryType = "person"
+            }else{
+                categoryType = state.categoryType.lowercased()
+            }
+            //people
             let request = CreatePostRequest(
                 title: state.title.trimmingCharacters(in: .whitespacesAndNewlines),
                 description: state.description.trimmingCharacters(in: .whitespacesAndNewlines),
                 imgs: uploadedImageURLs,
                 videos: uploadedVideoURLs,
-                categoryType: state.categoryType.lowercased(),
+                categoryType: categoryType,
                 category: state.isUsingCustomCategory ? nil : state.selectedCategory?.id,
                 subcategory: state.isUsingCustomCategory ? nil : state.selectedSubcategory?.id,
                 brand: state.isUsingCustomCategory ? nil : state.selectedBrand?.id,
@@ -648,11 +655,18 @@ class PostCreationViewModel: ObservableObject {
                 }
             }
             
+            var categoryType = ""
+            if state.categoryType.lowercased().contains("people"){
+                categoryType = "person"
+            }else{
+                categoryType = state.categoryType.lowercased()
+            }
+            
             // Create edit post request
             let request = EditPostRequest(
                 title: state.title.trimmingCharacters(in: .whitespacesAndNewlines),
                 description: state.description.trimmingCharacters(in: .whitespacesAndNewlines),
-                categoryType: state.categoryType.lowercased(),
+                categoryType: categoryType,
                 category: state.isUsingCustomCategory ? nil : state.selectedCategory?.id,
                 subcategory: state.isUsingCustomCategory ? nil : state.selectedSubcategory?.id,
                 brand: state.isUsingCustomCategory ? nil : state.selectedBrand?.id,

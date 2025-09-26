@@ -62,7 +62,7 @@ struct ContentView: View {
             .presentationDragIndicator(.hidden)
         })
         .task {
-          //  await updateViewModel.checkForUpdates()
+            await updateViewModel.checkForUpdates()
         }
     }
     
@@ -249,33 +249,25 @@ struct AppHeader: View {
 
                 Spacer()
                
-//               Button(action: {
-//                   NavigationManager.shared.navigate(to: .notificationview, style: .push(withAccentColor: Color.dynamicAccent))
-//               }) {
-//                   ZStack(alignment: .topTrailing) {
-//                       Image(systemName: "bell")
-//                           .font(.system(size: 20, weight: .medium))
-//                           .foregroundColor(Color.dynamicAccent)
-//                       
-//                       if notificationsViewModel.unreadCount > 0 {
-//                           Text("\(notificationsViewModel.unreadCount)")
-//                               .font(.system(size: 12, weight: .bold))
-//                               .foregroundColor(.white)
-//                               .padding(4)
-//                               .background(Color.red)
-//                               .clipShape(Circle())
-//                               .offset(x: 10, y: -10)
-//                       }
-//                   }
-//               }
-//               
-//               Button(action: {
-//                   NavigationManager.shared.navigate(to: .barcodeScanner, style: .presentFullScreen())
-//               }) {
-//                   Image(systemName: "barcode.viewfinder")
-//                       .font(.system(size: 20, weight: .medium))
-//                       .foregroundColor(Color.dynamicAccent)
-//               }
+               Button(action: {
+                   NavigationManager.shared.navigate(to: .notificationview, style: .push(withAccentColor: Color.dynamicAccent))
+               }) {
+                   ZStack(alignment: .topTrailing) {
+                       Image(systemName: "bell")
+                           .font(.system(size: 20, weight: .medium))
+                           .foregroundColor(Color.dynamicAccent)
+
+                       if notificationsViewModel.unreadCount > 0 {
+                           Text("\(notificationsViewModel.unreadCount)")
+                               .font(.system(size: 12, weight: .bold))
+                               .foregroundColor(.white)
+                               .padding(4)
+                               .background(Color.red)
+                               .clipShape(Circle())
+                               .offset(x: 10, y: -10)
+                       }
+                   }
+               }
             }
         }
         .padding(.horizontal)

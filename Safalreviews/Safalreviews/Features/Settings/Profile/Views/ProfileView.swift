@@ -273,7 +273,7 @@ struct ProfileView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(10)
                     .padding(.horizontal)
-                    .onChange(of: viewModel.otp) { newValue in
+                    .onChange(of: viewModel.otp) { _, newValue in
                         // Remove any non-numeric characters
                         let numericOnly = newValue.filter { $0.isNumber }
                         
@@ -379,7 +379,7 @@ struct ProfileView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(10)
                     .padding(.horizontal)
-                    .onChange(of: viewModel.otp) { newValue in
+                    .onChange(of: viewModel.otp) { _, newValue in
                         // Remove any non-numeric characters
                         let numericOnly = newValue.filter { $0.isNumber }
                         
@@ -676,9 +676,11 @@ struct EditableFieldsView: View {
                         TextField("Enter your email", text: Binding(
                             get: { email },
                             set: { newValue in
+                                let oldEmail = email
                                 email = newValue
                                 viewModel.profile.email = newValue
-                                if !newValue.isEmpty {
+                                // Only reset verification if email actually changed to a different value
+                                if !newValue.isEmpty && newValue != oldEmail {
                                     viewModel.resetEmailVerification()
                                 }
                             }
@@ -699,15 +701,15 @@ struct EditableFieldsView: View {
                         // Verify Button or Verified Badge
                         if !email.isEmpty && viewModel.isValidEmail(email) {
                             Group {
-                                if viewModel.isEmailVerified || !viewModel.needsEmailVerification(email: email) {
-                                    // Show verified badge
+                                if viewModel.isEmailVerified && email == viewModel.originalEmail {
+                                    // Show verified badge when email is verified and same as original
                                     HStack(spacing: 8) {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundColor(.green)
                                             .font(.title3)
                                     }
-                                } else {
-                                    // Show verify button
+                                } else if viewModel.needsEmailVerification(email: email) {
+                                    // Show verify button only when verification is needed
                                     Button {
                                         Task {
                                             await viewModel.sendEmailVerificationCode(email: email)
@@ -832,7 +834,7 @@ struct EditableFieldsView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
                         .background(Color.clear)
-                        .onChange(of: phoneNumber) { newValue in
+                        .onChange(of: phoneNumber) { _, newValue in
                             // Remove any non-numeric characters
                             let numericOnly = newValue.filter { $0.isNumber }
                             
@@ -873,15 +875,15 @@ struct EditableFieldsView: View {
                 // Verify Button or Verified Badge
                 if phoneNumber.count >= 10 {
                     Group {
-                        if viewModel.isPhoneVerified || !viewModel.needsVerification(phoneNumber: phoneNumber) {
-                            // Show verified badge
+                        if viewModel.isPhoneVerified && "\(countryCode)\(phoneNumber)".dropFirst() == viewModel.originalPhoneNumber {
+                            // Show verified badge when phone is verified and same as original
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
                                     .font(.title3)
                             }
-                        } else {
-                            // Show verify button
+                        } else if viewModel.needsVerification(phoneNumber: phoneNumber) {
+                            // Show verify button only when verification is needed
                             Button {
                                 Task {
                                     let fullPhoneNumber = "\(countryCode)\(phoneNumber)".dropFirst()
@@ -1020,8 +1022,118 @@ struct ProfileDetailsView: View {
             default:
                 return value
             }
+        } else if title == "State" {
+            return getFullStateName(for: value)
         }
         return value
+    }
+    
+    private func getFullStateName(for stateCode: String) -> String {
+        // Indian States (matching StatePicker exactly)
+        let indianStates: [String: String] = [
+            "CG": "Chhattisgarh",
+            "GA": "Goa",
+            "GJ": "Gujarat",
+            "HR": "Haryana",
+            "HP": "Himachal Pradesh",
+            "JH": "Jharkhand",
+            "KA": "Karnataka",
+            "KL": "Kerala",
+            "MP": "Madhya Pradesh",
+            "MH": "Maharashtra",
+            "MN": "Manipur",
+            "ML": "Meghalaya",
+            "MZ": "Mizoram",
+            "NL": "Nagaland",
+            "OR": "Odisha",
+            "PB": "Punjab",
+            "RJ": "Rajasthan",
+            "SK": "Sikkim",
+            "TN": "Tamil Nadu",
+            "TS": "Telangana",
+            "TR": "Tripura",
+            "UP": "Uttar Pradesh",
+            "UK": "Uttarakhand",
+            "WB": "West Bengal",
+            "AN": "Andaman and Nicobar Islands",
+            "CH": "Chandigarh",
+            "DN": "Dadra and Nagar Haveli and Daman and Diu",
+            "DL": "Delhi",
+            "JK": "Jammu and Kashmir",
+            "LA": "Ladakh",
+            "LD": "Lakshadweep",
+            "PY": "Puducherry"
+        ]
+        
+        // US States
+        let usStates: [String: String] = [
+            "AL": "Alabama",
+            "AK": "Alaska",
+            "AZ": "Arizona",
+            "AR": "Arkansas",
+            "CA": "California",
+            "CO": "Colorado",
+            "CT": "Connecticut",
+            "DE": "Delaware",
+            "FL": "Florida",
+            "GA": "Georgia",
+            "HI": "Hawaii",
+            "ID": "Idaho",
+            "IL": "Illinois",
+            "IN": "Indiana",
+            "IA": "Iowa",
+            "KS": "Kansas",
+            "KY": "Kentucky",
+            "LA": "Louisiana",
+            "ME": "Maine",
+            "MD": "Maryland",
+            "MA": "Massachusetts",
+            "MI": "Michigan",
+            "MN": "Minnesota",
+            "MS": "Mississippi",
+            "MO": "Missouri",
+            "MT": "Montana",
+            "NE": "Nebraska",
+            "NV": "Nevada",
+            "NH": "New Hampshire",
+            "NJ": "New Jersey",
+            "NM": "New Mexico",
+            "NY": "New York",
+            "NC": "North Carolina",
+            "ND": "North Dakota",
+            "OH": "Ohio",
+            "OK": "Oklahoma",
+            "OR": "Oregon",
+            "PA": "Pennsylvania",
+            "RI": "Rhode Island",
+            "SC": "South Carolina",
+            "SD": "South Dakota",
+            "TN": "Tennessee",
+            "TX": "Texas",
+            "UT": "Utah",
+            "VT": "Vermont",
+            "VA": "Virginia",
+            "WA": "Washington",
+            "WV": "West Virginia",
+            "WI": "Wisconsin",
+            "WY": "Wyoming",
+            "DC": "District of Columbia"
+        ]
+        
+        // Check if it's a state code (2-3 characters, uppercase)
+        if stateCode.count <= 3 && stateCode == stateCode.uppercased() {
+            // Try Indian states first
+            if let fullName = indianStates[stateCode] {
+                return fullName
+            }
+            // Then try US states
+            if let fullName = usStates[stateCode] {
+                return fullName
+            }
+        }
+        
+        // If no match found, return the original value
+        return stateCode
     }
 }
 

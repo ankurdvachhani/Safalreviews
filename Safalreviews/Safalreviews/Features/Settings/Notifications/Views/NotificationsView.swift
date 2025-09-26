@@ -69,10 +69,10 @@ struct NotificationsView: View {
     
     private func getModulesForUserRole() -> [NotificationModule] {
         let userRole = TokenManager.shared.loadCurrentUser()?.role
-        if userRole == "Patient" {
-            return [.general, .drainageReminder]
+        if userRole != "reviews" {
+            return [.general]
         }
-        return NotificationModule.allCases
+          return [.general]
     }
 }
 

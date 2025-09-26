@@ -140,6 +140,33 @@ extension View {
     }
 }
 
+struct ShimmerEffectView<Content: View>: View {
+    let content: Content
+    @State private var isAnimating = false
+
+    var body: some View {
+        content
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(LinearGradient(
+                        gradient: Gradient(colors: [.clear, .white.opacity(0.6), .clear]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    .offset(x: isAnimating ? 300 : -300)
+                    .animation(
+                        .linear(duration: 1.5)
+                            .repeatForever(autoreverses: false),
+                        value: isAnimating
+                    )
+                    .onAppear {
+                        isAnimating = true
+                    }
+            )
+            .clipped()
+    }
+}
+
 struct homeShimmerEffectView<Content: View>: View {
     let content: Content
     @State private var isAnimating = false

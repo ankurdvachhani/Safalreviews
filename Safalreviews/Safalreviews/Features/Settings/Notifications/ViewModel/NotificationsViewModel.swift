@@ -71,14 +71,6 @@ class NotificationsViewModel: ObservableObject {
         switch module.lowercased() {
         case "general":
             return "general"
-        case "drainagereminder":
-            return "drainageReminder"
-        case "drainagetriggerlow":
-            return "drainageTriggerLow"
-        case "drainagetriggermid":
-            return "drainageTriggerMid"
-        case "drainagetriggerhigh":
-            return "drainageTriggerHigh"
         default:
             return module
         }
@@ -303,40 +295,8 @@ class NotificationsViewModel: ObservableObject {
                 "notificationScreen": settings.general.notificationScreen,
             ]
 
-            let drainageTriggerLow = [
-                "email": settings.drainageTriggerLow.email,
-                "pushMobile": settings.drainageTriggerLow.pushMobile,
-                "sms": settings.drainageTriggerLow.sms,
-                "notificationScreen": settings.drainageTriggerLow.notificationScreen,
-            ]
-
-            let drainageTriggerMid = [
-                "email": settings.drainageTriggerMid.email,
-                "pushMobile": settings.drainageTriggerMid.pushMobile,
-                "sms": settings.drainageTriggerMid.sms,
-                "notificationScreen": settings.drainageTriggerMid.notificationScreen,
-            ]
-
-            let drainageTriggerHigh = [
-                "email": settings.drainageTriggerHigh.email,
-                "pushMobile": settings.drainageTriggerHigh.pushMobile,
-                "sms": settings.drainageTriggerHigh.sms,
-                "notificationScreen": settings.drainageTriggerHigh.notificationScreen,
-            ]
-
-            let drainageReminder = [
-                "email": settings.drainageReminder.email,
-                "pushMobile": settings.drainageReminder.pushMobile,
-                "sms": settings.drainageReminder.sms,
-                "notificationScreen": settings.drainageReminder.notificationScreen,
-            ]
-
             let requestBody: [String: Any] = [
                 "general": general,
-                "drainageTriggerLow": drainageTriggerLow,
-                "drainageTriggerMid": drainageTriggerMid,
-                "drainageTriggerHigh": drainageTriggerHigh,
-                "drainageReminder": drainageReminder,
             ]
 
             let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
@@ -371,17 +331,9 @@ class NotificationsViewModel: ObservableObject {
 
 class ObservableNotificationSettings: ObservableObject {
     @Published var general: NotificationPreference
-    @Published var drainageTriggerLow: NotificationPreference
-    @Published var drainageTriggerMid: NotificationPreference
-    @Published var drainageTriggerHigh: NotificationPreference
-    @Published var drainageReminder: NotificationPreference
 
     init(data: NotificationSettingsData) {
         general = data.general
-        drainageTriggerLow = data.drainageTriggerLow
-        drainageTriggerMid = data.drainageTriggerMid
-        drainageTriggerHigh = data.drainageTriggerHigh
-        drainageReminder = data.drainageReminder
     }
 
     func toDataModel(withOriginal data: NotificationSettingsData) -> NotificationSettingsData {
@@ -389,10 +341,6 @@ class ObservableNotificationSettings: ObservableObject {
             id: data.id,
             userId: data.userId,
             general: general,
-            drainageTriggerLow: drainageTriggerLow,
-            drainageTriggerMid: drainageTriggerMid,
-            drainageTriggerHigh: drainageTriggerHigh,
-            drainageReminder: drainageReminder,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             v: data.v

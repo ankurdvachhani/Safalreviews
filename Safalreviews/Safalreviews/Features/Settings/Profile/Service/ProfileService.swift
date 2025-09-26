@@ -70,7 +70,7 @@ struct TwoFactorAuthData: Codable {
 
 protocol ProfileServicing {
     func fetchProfile() async throws -> UserModel
-    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> Bool
+    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> UserUpdateResponse
     func uploadImage(_ image: UIImage) async throws -> String?
     func sendCodeForVerification(type: String, value: String, phoneNumber: String, isSendRequest: Bool) async throws -> VerificationResponse
     func deleteAccount(password: String) async throws -> Bool
@@ -211,7 +211,7 @@ actor ProfileService: ProfileServicing {
         }
     }
     
-    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> Bool {
+    func updateProfile(firstName: String, lastName: String, email: String, phoneNumber: String, country: String, state: String, dob: String, gender: String, profilePicture: String, phoneNumberVerifyId: String?, emailVerifyId: String?) async throws -> UserUpdateResponse {
         // First fetch current profile to compare email
         let currentProfile = try await fetchProfile()
         
@@ -245,11 +245,10 @@ actor ProfileService: ProfileServicing {
         // Only add email if it's different from current profile
         if !email.isEmpty && email != currentProfile.email {
             bodyData["email"] = email
-            // Add emailVerifyId if provided when email is changed
-            if let verifyId = emailVerifyId {
-                bodyData["emailVerifyId"] = verifyId
-            }
         }
+        
+        // Always add emailVerifyId (even if empty)
+        bodyData["emailVerifyId"] = emailVerifyId ?? ""
         
         if !country.isEmpty {
             bodyData["country"] = country
@@ -288,10 +287,8 @@ actor ProfileService: ProfileServicing {
             bodyData["profilePicture"] = profilePicture
         }
         
-        // Add phoneNumberVerifyId if provided
-        if let verifyId = phoneNumberVerifyId {
-            bodyData["phoneNumberVerifyId"] = verifyId
-        }
+        // Always add phoneNumberVerifyId (even if empty)
+        bodyData["phoneNumberVerifyId"] = phoneNumberVerifyId ?? ""
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: bodyData)
@@ -300,7 +297,7 @@ actor ProfileService: ProfileServicing {
         }
         
         let response: UserUpdateResponse = try await networkManager.fetch(endpoint, urlRequest: request)
-        return response.success // Return true if we have a non-empty ID
+        return response // Return the full response with message and error details
     }
     
     func sendCodeForVerification(type: String, value: String, phoneNumber: String, isSendRequest: Bool) async throws -> VerificationResponse {
@@ -386,10 +383,13 @@ actor ProfileService: ProfileServicing {
 
 struct UserUpdateResponse: Codable {
     let success: Bool
+    let message: String?
+    let error: String?
    
     enum CodingKeys: String, CodingKey {
         case success
-        
+        case message
+        case error
     }
 }
 

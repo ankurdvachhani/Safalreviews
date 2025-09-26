@@ -37,59 +37,59 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             List {
                 // Profile Section
-//                Section {
-//                    SettingsRow(
-//                        viewModel: viewModel, icon: "person.circle.fill",
-//                        iconColor: Color.dynamicAccent,
-//                        title: "Profile",
-//                        subtitle: "Manage your personal information"
-//                    )
-//                    .contentShape(Rectangle())
-//                    .onTapGesture {
-//                        NavigationManager.shared.navigate(to: .profile)
-//                    }
-//
-//                    SettingsRow(
-//                        viewModel: viewModel,
-//                        icon: "lock.fill",
-//                        iconColor: Color.dynamicAccent,
-//                        title: "Change Password",
-//                        subtitle: "Update your account password"
-//                    )
-//                    .contentShape(Rectangle())
-//                    .onTapGesture {
-//                        NavigationManager.shared.navigate(to: .changePassword)
-//                    }
-//                }
+                Section {
+                    SettingsRow(
+                        viewModel: viewModel, icon: "person.circle.fill",
+                        iconColor: Color.dynamicAccent,
+                        title: "Profile",
+                        subtitle: "Manage your personal information"
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        NavigationManager.shared.navigate(to: .profile)
+                    }
 
-//                    Section {
-//                        NavigationLink {
-//                            ReportView()
-//                        } label: {
-//                            SettingsRow(
-//                                viewModel: viewModel,
-//                                icon: "list.bullet.rectangle.portrait",
-//                                iconColor: Color.dynamicAccent,
-//                                title: "Reports",
-//                                subtitle: "View your reports"
-//                            )
-//                        }
-//                    }
+                    SettingsRow(
+                        viewModel: viewModel,
+                        icon: "lock.fill",
+                        iconColor: Color.dynamicAccent,
+                        title: "Change Password",
+                        subtitle: "Update your account password"
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        NavigationManager.shared.navigate(to: .changePassword)
+                    }
+                }
+
+                    Section {
+                        NavigationLink {
+                            ReportView()
+                        } label: {
+                            SettingsRow(
+                                viewModel: viewModel,
+                                icon: "list.bullet.rectangle.portrait",
+                                iconColor: Color.dynamicAccent,
+                                title: "Reports",
+                                subtitle: "View your reports"
+                            )
+                        }
+                    }
                     
                 // Notifications Section
-//                Section {
-//                    NavigationLink {
-//                        NotificationSettingsView()
-//                    } label: {
-//                        SettingsRow(
-//                            viewModel: viewModel,
-//                            icon: "bell.and.waves.left.and.right",
-//                            iconColor: Color.dynamicAccent,
-//                            title: "Notification Settings",
-//                            subtitle: "Customize your notification preferences"
-//                        )
-//                    }
-//                }
+                Section {
+                    NavigationLink {
+                        NotificationSettingsView()
+                    } label: {
+                        SettingsRow(
+                            viewModel: viewModel,
+                            icon: "bell.and.waves.left.and.right",
+                            iconColor: Color.dynamicAccent,
+                            title: "Notification Settings",
+                            subtitle: "Customize your notification preferences"
+                        )
+                    }
+                }
 
                 // Security Section
 //                Section {
@@ -107,41 +107,41 @@ struct SettingsView: View {
 //                }
 
 
-//                // Legal & Support Section
-//                Section {
-//                    NavigationLink {
-//                        SettingPolicyView(
-//                            title: "Terms & Conditions",
-//                            content: CMSviewModel.termsAndConditionsContent,
-//                            onAccept: {},
-//                            onReject: {}
-//                        )
-//                    } label: {
-//                        SettingsRow(
-//                            viewModel: viewModel,
-//                            icon: "doc.text.fill",
-//                            iconColor: Color.dynamicAccent,
-//                            title: "Terms & Conditions",
-//                            subtitle: "Read our terms of service"
-//                        )
-//                    }
-//
-//                    NavigationLink {
-//                        SettingPolicyView(
-//                            title: "Privacy Policy",
-//                            content: CMSviewModel.privacyPolicyContent,
-//                            onAccept: {},
-//                            onReject: {}
-//                        )
-//                    } label: {
-//                        SettingsRow(
-//                            viewModel: viewModel,
-//                            icon: "hand.raised.fill",
-//                            iconColor: Color.dynamicAccent,
-//                            title: "Privacy Policy",
-//                            subtitle: "Learn how we protect your data"
-//                        )
-//                    }
+                // Legal & Support Section
+                Section {
+                    NavigationLink {
+                        SettingPolicyView(
+                            title: "Terms & Conditions",
+                            content: CMSviewModel.termsAndConditionsContent,
+                            onAccept: {},
+                            onReject: {}
+                        )
+                    } label: {
+                        SettingsRow(
+                            viewModel: viewModel,
+                            icon: "doc.text.fill",
+                            iconColor: Color.dynamicAccent,
+                            title: "Terms & Conditions",
+                            subtitle: "Read our terms of service"
+                        )
+                    }
+
+                    NavigationLink {
+                        SettingPolicyView(
+                            title: "Privacy Policy",
+                            content: CMSviewModel.privacyPolicyContent,
+                            onAccept: {},
+                            onReject: {}
+                        )
+                    } label: {
+                        SettingsRow(
+                            viewModel: viewModel,
+                            icon: "hand.raised.fill",
+                            iconColor: Color.dynamicAccent,
+                            title: "Privacy Policy",
+                            subtitle: "Learn how we protect your data"
+                        )
+                    }
 //
 ////                    NavigationLink {
 ////                        //   ContactUsView()
@@ -154,7 +154,7 @@ struct SettingsView: View {
 ////                            subtitle: "Get in touch with our support team"
 ////                        )
 ////                    }
-//                }
+                }
 
                 // Account Actions Section
                 Section {
@@ -168,15 +168,15 @@ struct SettingsView: View {
                         )
                     }
 
-//                    Button(action: { showingDeleteAccountAlert = true }) {
-//                        SettingsRow(
-//                            viewModel: viewModel,
-//                            icon: "person.crop.circle.badge.minus",
-//                            iconColor: .red,
-//                            title: "Delete Account",
-//                            subtitle: "Permanently remove your account"
-//                        )
-//                    }
+                    Button(action: { showingDeleteAccountAlert = true }) {
+                        SettingsRow(
+                            viewModel: viewModel,
+                            icon: "person.crop.circle.badge.minus",
+                            iconColor: .red,
+                            title: "Delete Account",
+                            subtitle: "Permanently remove your account"
+                        )
+                    }
                 }
 
 //                // Theme Settings Section

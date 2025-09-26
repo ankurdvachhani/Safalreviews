@@ -124,11 +124,12 @@ final class ChangePasswordViewModel: ObservableObject {
                     throw NetworkError.unauthorized
                 }
                 
-                let endpoint = Endpoint(path: "\(APIConfig.Path.userUpdate)")
+                let endpoint = Endpoint(path: "\(APIConfig.Path.userUpdateById)/\(userId)")
                 
                 guard let url = URL(string: APIConfig.baseURL + endpoint.path) else {
                     throw NetworkError.invalidURL
                 }
+                
                 
                 var request = URLRequest(url: url)
                 request.httpMethod = "PUT"
@@ -148,7 +149,7 @@ final class ChangePasswordViewModel: ObservableObject {
                 }
                 
                 if !confirmPassword.isEmpty {
-                    bodyData["reNewPassword"] = confirmPassword
+                    bodyData["confirmPassword"] = confirmPassword
                 }
                 
                 do {

@@ -42,10 +42,6 @@ struct NotificationSettingsData: Codable {
     let id: String
     let userId: String
     let general: NotificationPreference
-    let drainageTriggerLow: NotificationPreference
-    let drainageTriggerMid: NotificationPreference
-    let drainageTriggerHigh: NotificationPreference
-    let drainageReminder: NotificationPreference
     let createdAt: String
     let updatedAt: String
     let v: Int
@@ -54,10 +50,6 @@ struct NotificationSettingsData: Codable {
         case id = "_id"
         case userId
         case general
-        case drainageTriggerLow
-        case drainageTriggerMid
-        case drainageTriggerHigh
-        case drainageReminder
         case createdAt
         case updatedAt
         case v = "__v"

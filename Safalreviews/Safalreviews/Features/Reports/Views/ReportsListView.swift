@@ -21,23 +21,23 @@ struct ReportsListView: View {
                     searchBar
                     
                     // Filter button
-                    Button {
-                        showingFilterSheet = true
-                    } label: {
-                        ZStack {
-                            Image(systemName: "line.3.horizontal.decrease.circle")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundColor(Color.dynamicAccent)
-                            
-                            // Red dot indicator for active filters
-                            if viewModel.filters.hasActiveFilters {
-                                Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 8, height: 8)
-                                    .offset(x: 8, y: -8)
-                            }
-                        }
-                    }
+//                    Button {
+//                        showingFilterSheet = true
+//                    } label: {
+//                        ZStack {
+//                            Image(systemName: "line.3.horizontal.decrease.circle")
+//                                .font(.system(size: 22, weight: .medium))
+//                                .foregroundColor(Color.dynamicAccent)
+//                            
+//                            // Red dot indicator for active filters
+//                            if viewModel.filters.hasActiveFilters {
+//                                Circle()
+//                                    .fill(Color.red)
+//                                    .frame(width: 8, height: 8)
+//                                    .offset(x: 8, y: -8)
+//                            }
+//                        }
+//                    }
                     
                     // Sort button
                     Button {

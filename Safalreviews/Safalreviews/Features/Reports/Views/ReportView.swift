@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ReportView: View {
-    @State private var selectedModule: ReportModule = .IncidentReport
+    @State private var selectedModule: ReportModule = .changeLog
 
     var body: some View {
         List {
@@ -50,13 +50,7 @@ struct ReportView: View {
     private var filteredModules: [ReportModule] {
         let currentUser = TokenManager.shared.loadCurrentUser()
         
-        // If user is not a Patient, show all modules
-        if currentUser?.role != "Patient" {
-            return ReportModule.allCases
-        } else {
-            // If user is a Patient, hide IncidentReport
-            return ReportModule.allCases.filter { $0 != .IncidentReport }
-        }
+        return ReportModule.allCases
     }
     
     @ViewBuilder
@@ -64,8 +58,6 @@ struct ReportView: View {
         switch module {
         case .changeLog:
             ReportsListView()
-        case .IncidentReport:
-            IncidentReportListView()
         }
     }
 }

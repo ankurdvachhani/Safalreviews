@@ -168,19 +168,20 @@ final class ProfileViewModel: ObservableObject {
     @Published var showOTPVerification = false
     @Published var showEmailVerification = false
     @Published var otp = ""
-    @Published var isPhoneVerified = false
-    @Published var isEmailVerified = false
+    @Published var isPhoneVerified = true
+    @Published var isEmailVerified = true
     @Published var successMessageOTP: String?
     @Published var isTwoFactorEnabled = false
     
     // MARK: - Private Properties
     private let profileService: ProfileServicing
+    private let networkManager: NetworkManager
     private var verifyId: String = ""
     private var emailVerifyId: String = ""
     private var verifiedPhoneNumbers: Set<String> = []
     private var verifiedEmails: Set<String> = []
-    private var originalPhoneNumber: String = ""
-    private var originalEmail: String = ""
+    var originalPhoneNumber: String = ""
+    var originalEmail: String = ""
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Computed Properties
@@ -212,8 +213,9 @@ final class ProfileViewModel: ObservableObject {
     }
     
     // MARK: - Initialization
-    init(profileService: ProfileServicing = ProfileService()) {
+    init(profileService: ProfileServicing = ProfileService(), networkManager: NetworkManager = NetworkManager()) {
         self.profileService = profileService
+        self.networkManager = networkManager
         setupValidation()
         Task {
             await fetchProfile()
@@ -368,7 +370,7 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let success = try await profileService.updateProfile(
+            let response = try await profileService.updateProfile(
                 firstName: firstName,
                 lastName: lastName,
                 email: email,
@@ -378,23 +380,25 @@ final class ProfileViewModel: ObservableObject {
                 dob: dob,
                 gender: gender,
                 profilePicture: profilePicture,
-                phoneNumberVerifyId: isPhoneVerified ? verifyId : nil,
-                emailVerifyId: isEmailVerified ? emailVerifyId : nil
+                phoneNumberVerifyId: verifyId.isEmpty ? nil : verifyId,
+                emailVerifyId: emailVerifyId.isEmpty ? nil : emailVerifyId
             )
             
-            if success {
+            if response.success {
                 // Fetch updated profile data
-                let response = try await profileService.fetchProfile()
-                profile = ProfileData(from: response)
-                successMessage = "Profile updated successfully"
+                let profileResponse = try await profileService.fetchProfile()
+                profile = ProfileData(from: profileResponse)
+                successMessage = response.message ?? "Profile updated successfully"
                 loadingState = .loaded
                 
                 // Reset verification states
                 resetPhoneVerification()
                 resetEmailVerification()
             } else {
-                loadingState = .error("Failed to update profile")
-                errorMessage = "Failed to update profile"
+                // Show the actual error message from the API
+                let errorMsg = response.message ?? response.error ?? "Failed to update profile"
+                loadingState = .error(errorMsg)
+                errorMessage = errorMsg
             }
         } catch {
             loadingState = .error(error.localizedDescription)
@@ -423,12 +427,13 @@ final class ProfileViewModel: ObservableObject {
             return false
         }
         
-        // If current number is different from original verified number
+        // If current number is different from original number, needs verification
         if phoneNumber != originalPhoneNumber {
             return true
         }
         
-        return true
+        // If phone number is the same as original, no verification needed (don't show verify button)
+        return false
     }
     
     func resetPhoneVerification() {
@@ -439,8 +444,6 @@ final class ProfileViewModel: ObservableObject {
     }
     
     func sendVerificationCode(phoneNumber: String) async {
-    //    guard validatePhoneNumber(phoneNumber) else { return }
-        
         // If this number is already verified, no need to verify again
         if verifiedPhoneNumbers.contains(phoneNumber) {
             isPhoneVerified = true
@@ -452,7 +455,7 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let response = try await profileService.sendCodeForVerification(
+            let response = try await networkManager.sendCodeForVerification(
                 type: "PhoneNumber",
                 value: phoneNumber,
                 phoneNumber: "",
@@ -462,7 +465,8 @@ final class ProfileViewModel: ObservableObject {
             loadingState = .loaded
             
             if response.success ?? false {
-                verifyId = response.verifyId ?? ""
+                // Try to get verifyId from data first, then fallback to top-level
+                verifyId = response.data?.verifyId ?? response.verifyId ?? ""
                 showOTPVerification = true
                 successMessageOTP = response.message ?? "Verification code sent to your phone"
             } else {
@@ -484,7 +488,7 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let response = try await profileService.sendCodeForVerification(
+            let response = try await networkManager.sendCodeForVerification(
                 type: otp,
                 value: verifyId,
                 phoneNumber: phoneNumber,
@@ -527,12 +531,13 @@ final class ProfileViewModel: ObservableObject {
             return false
         }
         
-        // If current email is different from original verified email
+        // If current email is different from original email, needs verification
         if email != originalEmail {
             return true
         }
         
-        return true
+        // If email is the same as original, no verification needed (don't show verify button)
+        return false
     }
     
     func sendEmailVerificationCode(email: String) async {
@@ -552,7 +557,7 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let response = try await profileService.sendCodeForVerification(
+            let response = try await networkManager.sendCodeForVerification(
                 type: "Email",
                 value: email,
                 phoneNumber: "",
@@ -562,7 +567,8 @@ final class ProfileViewModel: ObservableObject {
             loadingState = .loaded
             
             if response.success ?? false {
-                emailVerifyId = response.verifyId ?? ""
+                // Try to get verifyId from data first, then fallback to top-level
+                emailVerifyId = response.data?.verifyId ?? response.verifyId ?? ""
                 showEmailVerification = true
                 successMessageOTP = response.message ?? "Verification code sent to your email"
             } else {
@@ -584,7 +590,7 @@ final class ProfileViewModel: ObservableObject {
         errorMessage = nil
         
         do {
-            let response = try await profileService.sendCodeForVerification(
+            let response = try await networkManager.sendCodeForVerification(
                 type: otp,
                 value: emailVerifyId,
                 phoneNumber: email,

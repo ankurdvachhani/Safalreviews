@@ -117,6 +117,7 @@
 				181165652E61BA82003DE3E3 /* Sources */,
 				181165662E61BA82003DE3E3 /* Frameworks */,
 				181165672E61BA82003DE3E3 /* Resources */,
+				1858C0242E743F030035BADC /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -201,6 +202,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		1858C0242E743F030035BADC /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		181165652E61BA82003DE3E3 /* Sources */ = {
@@ -349,8 +375,9 @@
 				INFOPLIST_FILE = Safalreviews/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Safalreviews;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your Camara to add photos and Profile picture.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your Camara to add photos and Profile picture.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to camera to capture photos and videos for your posts.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to microphone to record videos for your posts.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to photo library to select photos and videos for your posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -386,8 +413,9 @@
 				INFOPLIST_FILE = Safalreviews/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Safalreviews;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your Camara to add photos and Profile picture.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your Camara to add photos and Profile picture.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to camera to capture photos and videos for your posts.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs access to microphone to record videos for your posts.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to photo library to select photos and videos for your posts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
