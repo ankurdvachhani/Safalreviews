@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LatestReviewsView: View {
     @StateObject private var viewModel = LatestReviewsViewModel()
+    @StateObject private var advertisementService = AdvertisementService()
     @State private var searchText = ""
     @State private var showingSearchBar = false
     @State private var scrollOffset: CGFloat = 0
@@ -102,6 +103,12 @@ struct LatestReviewsView: View {
                 viewModel.configureForMyPosts(userId: userId)
             } else {
                 viewModel.configureForAllPosts()
+            }
+            
+            // Fetch advertisements
+            Task {
+                await advertisementService.fetchAdvertisementSettings()
+                await advertisementService.fetchAdvertisements(for: "Dashboard")
             }
         }
     }
@@ -244,6 +251,11 @@ struct LatestReviewsView: View {
                             }
                         }
                     }
+                    
+                    // Show advertisement after specified interval
+                    if shouldShowAdvertisement(at: index) {
+                        advertisementView(for: index)
+                    }
                 }
                 
                 if viewModel.isLoading && !viewModel.posts.isEmpty {
@@ -350,6 +362,28 @@ struct LatestReviewsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+    }
+    
+    // MARK: - Advertisement Helper Methods
+    private func shouldShowAdvertisement(at index: Int) -> Bool {
+        let configuration = advertisementService.getConfiguration(for: "Dashboard")
+        guard configuration.isEnabled else { return false }
+        
+        // Show advertisement after every 'displayInterval' items
+        return (index + 1) % configuration.displayInterval == 0
+    }
+    
+    @ViewBuilder
+    private func advertisementView(for index: Int) -> some View {
+        let configuration = advertisementService.getConfiguration(for: "Dashboard")
+        
+        if let advertisement = advertisementService.getAdvertisementForIndex(index, configuration: configuration) {
+            AdvertisementView(advertisement: advertisement) {
+                advertisementService.openAdvertisementURL(advertisement.redirectUrl)
+            }
+        } else if advertisementService.isLoading {
+            AdvertisementShimmerView()
+        }
     }
 }
 

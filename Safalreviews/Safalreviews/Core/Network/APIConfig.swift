@@ -65,6 +65,10 @@ enum APIConfig {
         // MARK: - Post Creation APIs
         static let createPost = "/api/post"
         static let getProducts = "/api/admin/products/ratings/all"
+        
+        // MARK: - Advertisement APIs
+        static let advertisementSettings = "/api/application/advertisement"
+        static let advertisementList = "/api/advertisement/vendor-ad-new"
       
       
     }

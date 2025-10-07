@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var reviewStore = ReviewStore()
+    @StateObject private var advertisementService = AdvertisementService()
     @State private var searchText = ""
     @State private var selectedSortOption: ReviewSortOption = .dateDesc
     @State private var showingSortSheet = false
@@ -49,6 +50,12 @@ struct HomeView: View {
             }
             .onChange(of: searchText) { newValue in
                 reviewStore.searchProductReviews(query: newValue)
+            }
+            .onAppear {
+                Task {
+                    await advertisementService.fetchAdvertisementSettings()
+                    await advertisementService.fetchAdvertisements(for: "Home")
+                }
             }
     }
     
@@ -198,13 +205,18 @@ struct HomeView: View {
     private var productsList: some View {
         ScrollView {
             LazyVStack(spacing: 8) {
-                ForEach(filteredProducts) { product in
+                ForEach(Array(filteredProducts.enumerated()), id: \.element.id) { index, product in
                     NavigationLink(destination: ProductDetailView(product: product)) {
                         ProductReviewCard(product: product)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .task {
                         await reviewStore.loadMoreIfNeeded(currentItem: product)
+                    }
+                    
+                    // Show advertisement after specified interval
+                    if shouldShowAdvertisement(at: index) {
+                        advertisementView(for: index)
                     }
                 }
                 
@@ -263,6 +275,28 @@ struct HomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+    }
+    
+    // MARK: - Advertisement Helper Methods
+    private func shouldShowAdvertisement(at index: Int) -> Bool {
+        let configuration = advertisementService.getConfiguration(for: "Home")
+        guard configuration.isEnabled else { return false }
+        
+        // Show advertisement after every 'displayInterval' items
+        return (index + 1) % configuration.displayInterval == 0
+    }
+    
+    @ViewBuilder
+    private func advertisementView(for index: Int) -> some View {
+        let configuration = advertisementService.getConfiguration(for: "Home")
+        
+        if let advertisement = advertisementService.getAdvertisementForIndex(index, configuration: configuration) {
+            AdvertisementView(advertisement: advertisement) {
+                advertisementService.openAdvertisementURL(advertisement.redirectUrl)
+            }
+        } else if advertisementService.isLoading {
+            AdvertisementShimmerView()
+        }
     }
 }
 
