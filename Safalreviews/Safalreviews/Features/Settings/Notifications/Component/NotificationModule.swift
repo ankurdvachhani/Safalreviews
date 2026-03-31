@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftUICore
+import SwiftUI
 
 enum NotificationModule: String, CaseIterable {
     case general = "general"

@@ -69,6 +69,9 @@ enum APIConfig {
         // MARK: - Advertisement APIs
         static let advertisementSettings = "/api/application/advertisement"
         static let advertisementList = "/api/advertisement/vendor-ad-new"
+        static let dataCollection = "/api/notification-orchestrator/\(APIConfig.companyId)/\(APIConfig.applicationId)/data-collection"
+        static let interests = "/api/notification-orchestrator/\(APIConfig.companyId)/\(APIConfig.applicationId)/interests"
+        static let notificationDataCount = "/api/notification-orchestrator/\(APIConfig.companyId)/\(APIConfig.applicationId)/data-count"
       
       
     }

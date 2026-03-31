@@ -61,6 +61,7 @@ struct ProfileData {
     var isPhoneVerified: Bool = true
     var role:String = ""
     var isTwoFactorEnabled: Bool = false
+    var interests: [String] = []
     
     var fullName: String {
         "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
@@ -175,6 +176,7 @@ final class ProfileViewModel: ObservableObject {
     
     // MARK: - Private Properties
     private let profileService: ProfileServicing
+    private let dataCollectionService: DataCollectionServing
     private let networkManager: NetworkManager
     private var verifyId: String = ""
     private var emailVerifyId: String = ""
@@ -213,8 +215,11 @@ final class ProfileViewModel: ObservableObject {
     }
     
     // MARK: - Initialization
-    init(profileService: ProfileServicing = ProfileService(), networkManager: NetworkManager = NetworkManager()) {
+    init(profileService: ProfileServicing = ProfileService(), 
+         dataCollectionService: DataCollectionServing = DataCollectionService(),
+         networkManager: NetworkManager = NetworkManager()) {
         self.profileService = profileService
+        self.dataCollectionService = dataCollectionService
         self.networkManager = networkManager
         setupValidation()
         Task {
@@ -317,6 +322,16 @@ final class ProfileViewModel: ObservableObject {
                 if response.isEmailVerified == true {
                     verifiedEmails.insert(email)
                     isEmailVerified = true
+                }
+            }
+            
+            // Fetch user interests
+            if let userId = response.id {
+                do {
+                    let interestsResponse = try await dataCollectionService.fetchUserInterests(userId: userId)
+                    profile.interests = interestsResponse.data?.interests ?? []
+                } catch {
+                    print("Failed to fetch user interests: \(error)")
                 }
             }
             

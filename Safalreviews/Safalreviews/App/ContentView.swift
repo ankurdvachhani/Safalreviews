@@ -8,8 +8,10 @@ struct ContentView: View {
     @StateObject private var notificationsViewModel = NotificationsViewModel.shared
     @StateObject private var updateViewModel = UpdateAlertViewModel()
     @StateObject private var networkMonitor = NetworkMonitor.shared
+    @StateObject private var dataCollectionManager = DataCollectionManager.shared
     @State private var isFirstAppear = true
     @State private var shouldRefreshList = false
+    @State private var showInterestsSheet = false
     
     var body: some View {
         ZStack {
@@ -25,6 +27,9 @@ struct ContentView: View {
                         .task {
                             await notificationsViewModel.fetchNotificationCount()
                            // notificationsViewModel.startPollingNotifications()
+                            
+                            // Trigger background data collection with 8-second delay
+                            DataCollectionManager.shared.triggerDataCollection(withDelay: 8)
                         }
                 } else {
                     LoginView()
@@ -61,8 +66,18 @@ struct ContentView: View {
             .presentationDetents([.height(350)])
             .presentationDragIndicator(.hidden)
         })
+        .sheet(isPresented: $showInterestsSheet) {
+            InterestsSelectionSheet()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .task {
             await updateViewModel.checkForUpdates()
+            
+            // Check if interests are set after authentication
+            if appState.isAuthenticated && !dataCollectionManager.hasInterestsSet {
+                showInterestsSheet = true
+            }
         }
     }
     

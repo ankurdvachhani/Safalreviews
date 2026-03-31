@@ -24,6 +24,7 @@ struct ProfileView: View {
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var showEmailOTPView = false
     @State private var showPhoneOTPView = false
+    @State private var showInterestsSheet = false
     
     var body: some View {
         ZStack {
@@ -203,9 +204,6 @@ struct ProfileView: View {
 //        .refreshable {
 //            await viewModel.fetchProfile()
 //        }
-        .onChange(of: viewModel.errorMessage) { newValue in
-            errorMessage = newValue
-        }
         .onChange(of: viewModel.successMessage) { newValue in
             successMessage = newValue
         }
@@ -219,6 +217,16 @@ struct ProfileView: View {
             } else {
                 profilePhotosPicker(image: $selectedImage, isImageChanged: $isImageChanged)
             }
+        }
+        .sheet(isPresented: $showInterestsSheet) {
+            InterestsSelectionSheet {
+                // Refresh profile data or specifically interests after saving
+                Task {
+                    await viewModel.fetchProfile()
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .actionSheet(isPresented: $showImageSourcePicker) {
             ActionSheet(
@@ -484,7 +492,9 @@ struct ProfileView: View {
                         showPhoneOTPView: $showPhoneOTPView
                     )
                 } else {
-                    ProfileDetailsView(profile: viewModel.profile)
+                    ProfileDetailsView(profile: viewModel.profile, onEditInterests: {
+                        showInterestsSheet = true
+                    })
                 }
             }
             .overlay(content: {
@@ -928,13 +938,53 @@ struct EditableFieldsView: View {
 // MARK: - Profile Details View
 struct ProfileDetailsView: View {
     let profile: ProfileData
+    var onEditInterests: () -> Void
     
     var body: some View {
         VStack(spacing: 16) {
             personalInformationSection
             contactInformationSection
+            interestsSection
         }
         .padding(16)
+    }
+    
+    private var interestsSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Interests")
+            
+            VStack(spacing: 0) {
+                Button(action: onEditInterests) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("My Interests")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            if !profile.interests.isEmpty {
+                                Text(profile.interests.joined(separator: ", "))
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                                    .multilineTextAlignment(.leading)
+                            } else {
+                                Text("No interests selected")
+                                    .font(.body)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                    }
+                    .padding(16)
+                }
+            }
+            .background(Color(.systemBackground))
+            .cornerRadius(10)
+        }
     }
     
     private var personalInformationSection: some View {

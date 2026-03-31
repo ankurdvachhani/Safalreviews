@@ -32,6 +32,11 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             await UpdateAlertViewModel().checkForUpdates()
         }
         
+        // Handle notification if app was launched from one
+        if let userInfo = launchOptions?[.remoteNotification] as? [String: Any] {
+            DataCollectionManager.shared.handleNotificationOpen(userInfo: userInfo)
+        }
+        
         return true
     }
     
@@ -249,6 +254,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // MARK: - Private Methods
     
     private func handleNotificationTap(userInfo: [AnyHashable: Any]) {
+        // Track notification open
+        DataCollectionManager.shared.handleNotificationOpen(userInfo: userInfo)
+        
         // Extract any relevant data from userInfo
         if let type = userInfo["type"] as? String {
             switch type {
