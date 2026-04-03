@@ -48,6 +48,7 @@ class InterestsViewModel: ObservableObject {
             let response = try await service.fetchUserInterests(userId: userId)
             if let interests = response.data?.interests {
                 self.selectedInterests = Set(interests)
+                UserDefaults.standard.set(interests, forKey: "userInterests")
             }
         } catch {
             print("Error fetching user interests: \(error.localizedDescription)")
@@ -58,7 +59,7 @@ class InterestsViewModel: ObservableObject {
     
     @MainActor
     func saveInterests() async {
-        guard let userId = TokenManager.shared.getUserId() else { return }
+        guard let userId = TokenManager.shared.loadCurrentUser()?.id  else { return }
         isLoading = true
         errorMessage = nil
         
@@ -91,6 +92,8 @@ class InterestsViewModel: ObservableObject {
         do {
             let response = try await service.sendDataCollection(request: request)
             if response.success {
+                let interestsArray = Array(selectedInterests)
+                UserDefaults.standard.set(interestsArray, forKey: "userInterests")
                 DataCollectionManager.shared.setInterestsStatus(isSet: true)
                 self.isSaved = true
             } else {

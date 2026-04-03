@@ -82,7 +82,7 @@ class DataCollectionManager: NSObject, ObservableObject {
         }
         
         let user = TokenManager.shared.loadCurrentUser()
-        let userId = TokenManager.shared.getUserId()
+        let userId = TokenManager.shared.loadCurrentUser()?.id ?? ""
         let fcmToken = UserDefaults.standard.string(forKey: "fcmToken")
         
         // Basic location info if available
@@ -136,7 +136,7 @@ class DataCollectionManager: NSObject, ObservableObject {
             phoneNumber: user?.phoneNumber,
             ip: ipAddress,
             tags: nil,
-            interests: nil,
+            interests: UserDefaults.standard.stringArray(forKey: "userInterests"),
             latitude: latitude,
             longitude: longitude,
             lastLocationUpdate: lastUpdate,

@@ -32,8 +32,19 @@
 		1811689C2E61BFA4003DE3E3 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 1811689B2E61BFA4003DE3E3 /* FirebaseStorageCombine-Community */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		18B2ADC12F7E86C0000EBC4C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 181165612E61BA82003DE3E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 18B2ADBB2F7E86C0000EBC4C;
+			remoteInfo = NotificationService;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		181165692E61BA82003DE3E3 /* Safalreviews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Safalreviews.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		18B2ADBC2F7E86C0000EBC4C /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -44,6 +55,13 @@
 			);
 			target = 181165682E61BA82003DE3E3 /* Safalreviews */;
 		};
+		18B2ADC82F7E86C0000EBC4C /* Exceptions for "NotificationService" folder in "NotificationService" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 18B2ADBB2F7E86C0000EBC4C /* NotificationService */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -53,6 +71,14 @@
 				1811689D2E61BFD0003DE3E3 /* Exceptions for "Safalreviews" folder in "Safalreviews" target */,
 			);
 			path = Safalreviews;
+			sourceTree = "<group>";
+		};
+		18B2ADBD2F7E86C0000EBC4C /* NotificationService */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				18B2ADC82F7E86C0000EBC4C /* Exceptions for "NotificationService" folder in "NotificationService" target */,
+			);
+			path = NotificationService;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -88,6 +114,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		18B2ADB92F7E86C0000EBC4C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -95,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				1811656B2E61BA82003DE3E3 /* Safalreviews */,
+				18B2ADBD2F7E86C0000EBC4C /* NotificationService */,
 				1811656A2E61BA82003DE3E3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -103,6 +137,7 @@
 			isa = PBXGroup;
 			children = (
 				181165692E61BA82003DE3E3 /* Safalreviews.app */,
+				18B2ADBC2F7E86C0000EBC4C /* NotificationService.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,6 +157,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				18B2ADC22F7E86C0000EBC4C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				1811656B2E61BA82003DE3E3 /* Safalreviews */,
@@ -156,6 +192,28 @@
 			productReference = 181165692E61BA82003DE3E3 /* Safalreviews.app */;
 			productType = "com.apple.product-type.application";
 		};
+		18B2ADBB2F7E86C0000EBC4C /* NotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18B2ADC72F7E86C0000EBC4C /* Build configuration list for PBXNativeTarget "NotificationService" */;
+			buildPhases = (
+				18B2ADB82F7E86C0000EBC4C /* Sources */,
+				18B2ADB92F7E86C0000EBC4C /* Frameworks */,
+				18B2ADBA2F7E86C0000EBC4C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				18B2ADBD2F7E86C0000EBC4C /* NotificationService */,
+			);
+			name = NotificationService;
+			packageProductDependencies = (
+			);
+			productName = NotificationService;
+			productReference = 18B2ADBC2F7E86C0000EBC4C /* NotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -163,11 +221,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					181165682E61BA82003DE3E3 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					18B2ADBB2F7E86C0000EBC4C = {
+						CreatedOnToolsVersion = 26.4;
 					};
 				};
 			};
@@ -189,12 +250,20 @@
 			projectRoot = "";
 			targets = (
 				181165682E61BA82003DE3E3 /* Safalreviews */,
+				18B2ADBB2F7E86C0000EBC4C /* NotificationService */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		181165672E61BA82003DE3E3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18B2ADBA2F7E86C0000EBC4C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -236,7 +305,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		18B2ADB82F7E86C0000EBC4C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		18B2ADC22F7E86C0000EBC4C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 18B2ADBB2F7E86C0000EBC4C /* NotificationService */;
+			targetProxy = 18B2ADC12F7E86C0000EBC4C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		181165722E61BA83003DE3E3 /* Debug */ = {
@@ -436,6 +520,64 @@
 			};
 			name = Release;
 		};
+		18B2ADC52F7E86C0000EBC4C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U6656ZFCMG;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = safal.reviews.app.com.SafalReviews.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		18B2ADC62F7E86C0000EBC4C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = U6656ZFCMG;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = safal.reviews.app.com.SafalReviews.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -453,6 +595,15 @@
 			buildConfigurations = (
 				181165752E61BA83003DE3E3 /* Debug */,
 				181165762E61BA83003DE3E3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		18B2ADC72F7E86C0000EBC4C /* Build configuration list for PBXNativeTarget "NotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				18B2ADC52F7E86C0000EBC4C /* Debug */,
+				18B2ADC62F7E86C0000EBC4C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
