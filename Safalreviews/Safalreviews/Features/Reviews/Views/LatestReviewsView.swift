@@ -378,7 +378,12 @@ struct LatestReviewsView: View {
         let configuration = advertisementService.getConfiguration(for: "Dashboard")
         
         if let advertisement = advertisementService.getAdvertisementForIndex(index, configuration: configuration) {
-            AdvertisementView(advertisement: advertisement) {
+            AdvertisementView(
+                advertisement: advertisement,
+                pageKey: configuration.pageName,
+                sectionKey: configuration.sectionName,
+                advertisementService: advertisementService
+            ) {
                 advertisementService.openAdvertisementURL(advertisement.redirectUrl)
             }
         } else if advertisementService.isLoading {

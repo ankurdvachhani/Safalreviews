@@ -9,10 +9,17 @@ import SwiftUI
 
 struct AdvertisementView: View {
     let advertisement: Advertisement
+    let pageKey: String
+    let sectionKey: String
+    @ObservedObject var advertisementService: AdvertisementService
     let onTap: () -> Void
     
+    @State private var showingConfirmation = false
+    
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            showingConfirmation = true
+        }) {
             VStack(alignment:.leading,spacing: 8) {
                 Text("Advertisement")
                     .font(.caption)
@@ -34,28 +41,6 @@ struct AdvertisementView: View {
                     .clipped()
                     .cornerRadius(8)
                 }
-                
-//                VStack(alignment: .leading, spacing: 4) {
-//                    Text(advertisement.adName)
-//                        .font(.headline)
-//                        .foregroundColor(.primary)
-//                        .lineLimit(2)
-//                    
-//                    if !advertisement.adContentText.isEmpty {
-//                        Text(advertisement.adContentText)
-//                            .font(.caption)
-//                            .foregroundColor(.secondary)
-//                            .lineLimit(3)
-//                    }
-//                    
-//                    if !advertisement.description.isEmpty {
-//                        Text(advertisement.description)
-//                            .font(.caption2)
-//                            .foregroundColor(.secondary)
-//                            .lineLimit(2)
-//                    }
-//                }
-//                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(12)
             .background(Color(.systemBackground))
@@ -63,16 +48,49 @@ struct AdvertisementView: View {
             .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            Task {
+                await advertisementService.trackAdvertisement(
+                    advertisementId: advertisement.id,
+                    pageKey: pageKey,
+                    sectionKey: sectionKey,
+                    type: "impression"
+                )
+            }
+        }
+        .alert("External Link", isPresented: $showingConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Yes") {
+                Task {
+                    await advertisementService.trackAdvertisement(
+                        advertisementId: advertisement.id,
+                        pageKey: pageKey,
+                        sectionKey: sectionKey,
+                        type: "click"
+                    )
+                    onTap()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to leave this app?")
+        }
     }
 }
 
 // MARK: - Advertisement List Item
 struct AdvertisementListItem: View {
     let advertisement: Advertisement
+    let pageKey: String
+    let sectionKey: String
+    @ObservedObject var advertisementService: AdvertisementService
     let onTap: () -> Void
     
+    @State private var showingConfirmation = false
+    
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            showingConfirmation = true
+        }) {
             HStack(spacing: 12) {
                 if let imageUrl = advertisement.imageUrl, !imageUrl.isEmpty {
                     AsyncImage(url: URL(string: imageUrl)) { image in
@@ -124,6 +142,32 @@ struct AdvertisementListItem: View {
             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
         }
         .buttonStyle(PlainButtonStyle())
+        .onAppear {
+            Task {
+                await advertisementService.trackAdvertisement(
+                    advertisementId: advertisement.id,
+                    pageKey: pageKey,
+                    sectionKey: sectionKey,
+                    type: "impression"
+                )
+            }
+        }
+        .alert("External Link", isPresented: $showingConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Yes") {
+                Task {
+                    await advertisementService.trackAdvertisement(
+                        advertisementId: advertisement.id,
+                        pageKey: pageKey,
+                        sectionKey: sectionKey,
+                        type: "click"
+                    )
+                    onTap()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to leave this app?")
+        }
     }
 }
 
@@ -147,6 +191,9 @@ struct AdvertisementListItem: View {
                 mobileImageUrl: "https://picsum.photos/300/200",
                 adType: "banner"
             ),
+            pageKey: "Home",
+            sectionKey: "In-Between",
+            advertisementService: AdvertisementService(),
             onTap: {}
         )
         
@@ -168,6 +215,9 @@ struct AdvertisementListItem: View {
                 mobileImageUrl: "https://picsum.photos/100/100",
                 adType: "list"
             ),
+            pageKey: "Home",
+            sectionKey: "List-Section",
+            advertisementService: AdvertisementService(),
             onTap: {}
         )
     }

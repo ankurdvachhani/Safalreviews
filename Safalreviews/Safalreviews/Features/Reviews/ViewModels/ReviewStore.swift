@@ -490,4 +490,32 @@ class AdvertisementService: ObservableObject {
             UIApplication.shared.open(url)
         }
     }
+    
+    // MARK: - Track Advertisement (Impression/Click)
+    func trackAdvertisement(advertisementId: String, pageKey: String, sectionKey: String, type: String, description: String = "") async {
+        do {
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+            let request = AdvertisementTrackingRequest(
+                advertisementId: advertisementId,
+                description: description,
+                deviceId: deviceId,
+                device: "ios",
+                pageKey: pageKey,
+                sectionKey: sectionKey,
+                type: type
+            )
+            
+            // Construct the full URL using analyticsUrl
+            let url = URL(string: APIConfig.analyticsUrl + APIConfig.Path.advertisementAnalytics)!
+            var urlRequest = URLRequest(url: url)
+            urlRequest.httpMethod = "POST"
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            urlRequest.httpBody = try JSONEncoder().encode(request)
+            
+            let _: AdvertisementTrackingResponse = try await networkManager.fetch(Endpoint(path: ""), urlRequest: urlRequest)
+            print("✅ Successfully tracked advertisement \(type) for ID: \(advertisementId)")
+        } catch {
+            print("❌ Failed to track advertisement \(type): \(error)")
+        }
+    }
 }

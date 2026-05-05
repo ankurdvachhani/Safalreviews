@@ -97,3 +97,23 @@ struct AdvertisementConfiguration {
         isEnabled: true
     )
 }
+
+// MARK: - Advertisement Tracking
+struct AdvertisementTrackingRequest: Codable {
+    let advertisementId: String
+    let description: String
+    let deviceId: String?
+    let device: String
+    let pageKey: String
+    let sectionKey: String
+    let type: String // "impression" or "click"
+    
+    enum CodingKeys: String, CodingKey {
+        case advertisementId, description, deviceId, device, pageKey, sectionKey, type
+    }
+}
+
+struct AdvertisementTrackingResponse: Codable {
+    let success: Bool
+    let message: String
+}

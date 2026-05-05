@@ -3,6 +3,7 @@ import Foundation
 enum APIConfig {
     static let baseURL = "https://api.dev.safalreviews.com"
     static let utilitiesUrl = "https://api.dev.safalutilities.com"
+    static let analyticsUrl = "https://api.dev.safalvendors.com"
     static let standardizedUrl = "/api/standardized/auth/"
     static let applicationId = "safalreviews3y2f13"
     static let companyId = "hemantcompanywzg6lw"
@@ -11,6 +12,7 @@ enum APIConfig {
                               APIConfig.applicationId + "/"
     
     enum Path {
+        static let advertisementAnalytics = "/analytics/advertisement"
         static let appVersionCheck = "/api/application/version-check"
         static let utilities = "/api/legal-document/public"
         static let signUp = "/api/user/register"

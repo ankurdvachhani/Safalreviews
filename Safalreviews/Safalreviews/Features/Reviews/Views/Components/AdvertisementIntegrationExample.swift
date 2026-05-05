@@ -31,7 +31,12 @@ struct AdvertisementIntegrationExample: View {
                                 index,
                                 configuration: advertisementService.getConfiguration(for: currentPage)
                             ) {
-                                AdvertisementView(advertisement: advertisement) {
+                                AdvertisementView(
+                                    advertisement: advertisement,
+                                    pageKey: currentPage,
+                                    sectionKey: "Between the reviews card",
+                                    advertisementService: advertisementService
+                                ) {
                                     advertisementService.openAdvertisementURL(advertisement.redirectUrl)
                                 }
                                 .padding(.horizontal)
@@ -96,7 +101,12 @@ struct AdvertisementGridExample: View {
                                 index,
                                 configuration: advertisementService.getConfiguration(for: currentPage)
                             ) {
-                                AdvertisementView(advertisement: advertisement) {
+                                AdvertisementView(
+                                    advertisement: advertisement,
+                                    pageKey: currentPage,
+                                    sectionKey: "Grid-Section",
+                                    advertisementService: advertisementService
+                                ) {
                                     advertisementService.openAdvertisementURL(advertisement.redirectUrl)
                                 }
                                 .gridCellColumns(2) // Span both columns
@@ -133,7 +143,12 @@ struct AdvertisementManualExample: View {
             Text("Current Index: \(currentIndex)")
             
             if let advertisement = getCurrentAdvertisement() {
-                AdvertisementView(advertisement: advertisement) {
+                AdvertisementView(
+                    advertisement: advertisement,
+                    pageKey: "Home",
+                    sectionKey: "Manual-Section",
+                    advertisementService: advertisementService
+                ) {
                     advertisementService.openAdvertisementURL(advertisement.redirectUrl)
                 }
             }
